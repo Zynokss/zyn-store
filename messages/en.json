@@ -1,0 +1,61 @@
+{
+  "Navbar": {
+    "catalog": "Catalog",
+    "dtfPrints": "DTF Prints",
+    "lookbook": "Lookbook",
+    "trackOrder": "Track Order"
+  },
+  "Categories": {
+    "categorySelect": "Category Select",
+    "all": "All Items",
+    "tops": "Tops",
+    "bottoms": "Bottoms",
+    "outerwear": "Outerwear",
+    "topProducts": "Top Products",
+    "searchPlaceholder": "Search collection..."
+  },
+  "Cart": {
+    "title": "Your Basket",
+    "empty": "Your basket is empty",
+    "qty": "Qty",
+    "size": "Size",
+    "total": "Total",
+    "checkout": "Proceed to Checkout",
+    "continue": "Continue Shopping"
+  },
+  "Product": {
+    "selectSize": "Select Size",
+    "addToCart": "Add to Basket",
+    "inStock": "In Stock",
+    "description": "Description",
+    "details": "Product Details"
+  },
+  "Account": {
+    "title": "My Account",
+    "history": "Order History",
+    "orders": "Orders",
+    "noOrders": "You haven't placed any orders yet.",
+    "signOut": "Sign Out",
+    "viewCatalog": "Browse Catalog",
+    "orderNo": "Order No.",
+    "itemsOrdered": "Ordered Items",
+    "deliveryAddress": "Delivery Address",
+    "transferNotice": "To confirm this order, send the transfer to our CIH account using your Order ID as reference.",
+    "transferReason": "Transfer Reference / Reason (Required)",
+    "transferReasonWarning": "* Please enter your Order ID in the transfer reason field in your banking app."
+},
+  "Checkout": {
+    "title": "Bank Transfer Payment",
+    "contact": "Contact Information",
+    "shipping": "Shipping Address",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "address": "Full Address",
+    "city": "City",
+    "confirm": "Confirm Order",
+    "summary": "Order Summary",
+    "totalToPay": "Total Amount"
+  }
+}

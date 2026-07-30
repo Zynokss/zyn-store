@@ -1,0 +1,48 @@
+import { Product } from './types';
+
+export const MOCK_PRODUCTS: Product[] = [
+  {
+    id: 'prod_1',
+    name: 'Heavyweight Oversized Hoodie',
+    description: '450 GSM organic cotton blend built with drop shoulders and structured drape.',
+    category: 'Outerwear',
+    price: 85,
+    sizes: ['S', 'M', 'L', 'XL'],
+    images: ['https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=800'],
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 'prod_2',
+    name: 'Acid Wash Boxy Tee',
+    description: 'Custom pigment-dyed tee with a broad chest and relaxed vintage finish.',
+    category: 'Tops',
+    price: 45,
+    sizes: ['S', 'M', 'L', 'XL'],
+    images: ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&q=80&w=800'],
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 'prod_3',
+    name: 'Minimalist Cargo Pants',
+    description: 'Durable nylon blend pants featuring dynamic tailoring and hidden side zip pockets.',
+    category: 'Bottoms',
+    price: 110,
+    sizes: ['S', 'M', 'L'],
+    images: ['https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=800'],
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 'prod_4',
+    name: 'Tactical Cap',
+    description: 'Structured 6-panel cap with magnetic rear clasp and weather-resistant coating.',
+    category: 'Accessories',
+    price: 35,
+    sizes: ['M', 'L'],
+    images: ['https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=800'],
+    inStock: true,
+    featured: false,
+  },
+];

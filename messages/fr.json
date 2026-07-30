@@ -1,0 +1,61 @@
+{
+  "Navbar": {
+    "catalog": "Catalogue",
+    "dtfPrints": "Impressions DTF",
+    "lookbook": "Lookbook",
+    "trackOrder": "Suivre Commande"
+  },
+  "Categories": {
+    "categorySelect": "Sélection Catégorie",
+    "all": "Tous les Articles",
+    "tops": "Hauts",
+    "bottoms": "Bas",
+    "outerwear": "Vêtements d'extérieur",
+    "topProducts": "Meilleurs Produits",
+    "searchPlaceholder": "Rechercher..."
+  },
+  "Cart": {
+    "title": "Votre Panier",
+    "empty": "Votre panier est vide",
+    "qty": "Qté",
+    "size": "Taille",
+    "total": "Total",
+    "checkout": "Commander",
+    "continue": "Continuer les achats"
+  },
+  "Product": {
+    "selectSize": "Sélectionner la Taille",
+    "addToCart": "Ajouter au Panier",
+    "inStock": "En Stock",
+    "description": "Description",
+    "details": "Détails du Produit"
+  },
+  "Account": {
+    "title": "Mon Espace Client",
+    "history": "Historique des Commandes",
+    "orders": "Commandes",
+    "noOrders": "Vous n'avez pas encore passé de commande.",
+    "signOut": "Déconnexion",
+    "viewCatalog": "Voir le Catalogue",
+    "orderNo": "N° de Commande",
+    "itemsOrdered": "Articles Commandés",
+    "deliveryAddress": "Adresse de Livraison",
+    "transferNotice": "Pour valider cette commande, effectuez le virement sur notre compte CIH en indiquant le N° de commande.",
+    "transferReason": "Motif du Virement (Obligatoire)",
+    "transferReasonWarning": "* N'oubliez pas d'indiquer le N° de commande dans le motif du virement sur votre application bancaire."
+  },
+  "Checkout": {
+    "title": "Paiement Par Virement Bancaire",
+    "contact": "Informations de Contact",
+    "shipping": "Adresse de Livraison",
+    "email": "Adresse Email",
+    "phone": "Téléphone",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "address": "Adresse complète",
+    "city": "Ville",
+    "confirm": "Confirmer la commande",
+    "summary": "Récapitulatif",
+    "totalToPay": "Total à Payer"
+  }
+}

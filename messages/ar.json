@@ -1,0 +1,61 @@
+{
+  "Navbar": {
+    "catalog": "الكتالوج",
+    "dtfPrints": "طباعة DTF",
+    "lookbook": "كتليب الصور",
+    "trackOrder": "تتبع الطلب"
+  },
+  "Categories": {
+    "categorySelect": "تحديد الفئة",
+    "all": "جميع المنتجات",
+    "tops": "قمصان وتوب",
+    "bottoms": "سراويل وبناطيل",
+    "outerwear": "ملابس خارجية",
+    "topProducts": "أبرز المنتجات",
+    "searchPlaceholder": "بحث في التشكيلة..."
+  },
+  "Cart": {
+    "title": "سلة التسوق",
+    "empty": "سلة التسوق فارغة",
+    "qty": "الكمية",
+    "size": "المقاس",
+    "total": "المجموع",
+    "checkout": "متابعة الشراء",
+    "continue": "مواصلة التسوق"
+  },
+  "Product": {
+    "selectSize": "اختر المقاس",
+    "addToCart": "أضف إلى السلة",
+    "inStock": "متوفر في المخزون",
+    "description": "الوصف",
+    "details": "تفاصيل المنتج"
+  },
+  "Account": {
+    "title": "حسابي الشخصي",
+    "history": "سجل الطلبات",
+    "orders": "الطلبات",
+    "noOrders": "لم تقم بأي طلب حتى الآن.",
+    "signOut": "تسجيل الخروج",
+    "viewCatalog": "تصفح الكتالوج",
+    "orderNo": "رقم الطلب",
+    "itemsOrdered": "المنتجات المطلوبة",
+    "deliveryAddress": "عنوان التسليم",
+    "transferNotice": "لتأكيد طلبك، يرجى إجراء التحويل البنكي إلى حسابنا مع ذكر رقم الطلب.",
+    "transferReason": "سبب / مرجع التحويل (مهم جداً)",
+    "transferReasonWarning": "* يرجى إدخال رقم الطلب في سبب التحويل على تطبيق البنك لتأكيد عملية الشراء."
+},
+  "Checkout": {
+    "title": "الدفع عبر التحويل البنكي",
+    "contact": "معلومات الاتصال",
+    "shipping": "عنوان الشحن",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "firstName": "الاسم الأول",
+    "lastName": "النسب",
+    "address": "العنوان الكامل",
+    "city": "المدينة",
+    "confirm": "تأكيد الطلب",
+    "summary": "ملخص الطلب",
+    "totalToPay": "المبلغ الإجمالي"
+  }
+}

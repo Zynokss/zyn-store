@@ -1,0 +1,74 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  password   String?  // Optional if using OAuth
+  name       String?
+  role       String   @default("CUSTOMER") // "CUSTOMER" or "ADMIN"
+  
+  // Saved shipping details for fast checkout
+  phone      String?
+  address1   String?
+  address2   String?
+  city       String?
+  postalCode String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  category    String
+  price       Float
+  sizes       String[]
+  images      String[]
+  featured    Boolean  @default(false)
+  inStock     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String?  // Nullable for guest checkouts
+  user      User?    @relation(fields: [userId], references: [id])
+  email     String
+  firstName String
+  lastName  String
+  address   String
+  city      String
+  state     String
+  zipCode   String
+  total     Float
+  status    String   @default("PENDING_PAYMENT") // PENDING_PAYMENT, PROCESSING, SHIPPED, DELIVERED
+  createdAt DateTime @default(now())
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  selectedSize String
+  quantity     Int
+  price        Float
+}
