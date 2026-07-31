@@ -1,22 +1,33 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  'https://ujfxkybkhqdpdjigkqei.supabase.co';
-
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  'sb_publishable_t9b4bZCrElb8trjHmfFdkQ_fjDWOi0l';
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
+    // 1. Resolve & sanitize environment variables at invocation time
+    const rawUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      'https://ujfxkybkhqdpdjigkqei.supabase.co';
+
+    const supabaseUrl = rawUrl.replace(/["']/g, '').trim();
+
+    const supabaseAnonKey = (
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      'sb_publishable_t9b4bZCrElb8trjHmfFdkQ_fjDWOi0l'
+    )
+      .replace(/["']/g, '')
+      .trim();
+
+    // 2. Instantiate inside the handler so build-time static collection never fails
+    const supabase = createClient(
+      supabaseUrl.startsWith('http') ? supabaseUrl : `https://${supabaseUrl}`,
+      supabaseAnonKey
+    );
+
+    // 3. Fetch products
     const { data: products, error } = await supabase
       .from('Product')
       .select('*')
