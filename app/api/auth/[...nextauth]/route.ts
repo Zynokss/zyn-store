@@ -3,6 +3,13 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
+// Sanitize & resolve canonical site URL
+const getBaseUrl = () => {
+  const envUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'https://zynbrand.vercel.app';
+  const cleanUrl = envUrl.replace(/["']/g, '').trim();
+  return cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
+};
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -59,6 +66,7 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   secret: process.env.NEXTAUTH_SECRET || 'zyn-store-super-secret-key',
+  useSecureCookies: process.env.NODE_ENV === 'production',
 };
 
 const handler = NextAuth(authOptions);
