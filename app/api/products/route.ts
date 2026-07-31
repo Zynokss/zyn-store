@@ -6,32 +6,31 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    // 1. Resolve & sanitize environment variables at invocation time
+    // 1. Get raw URL or fallback
     const rawUrl =
       process.env.NEXT_PUBLIC_SUPABASE_URL ||
       'https://ujfxkybkhqdpdjigkqei.supabase.co';
 
-    const supabaseUrl = rawUrl.replace(/["']/g, '').trim();
+    // 2. Aggressively strip quotes, newlines, and surrounding spaces
+    let cleanUrl = rawUrl.replace(/["'\r\n]/g, '').trim();
 
-    const supabaseAnonKey = (
+    // Ensure it begins strictly with http:// or https://
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
+    const rawKey =
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      'sb_publishable_t9b4bZCrElb8trjHmfFdkQ_fjDWOi0l'
-    )
-      .replace(/["']/g, '')
-      .trim();
+      'sb_publishable_t9b4bZCrElb8trjHmfFdkQ_fjDWOi0l';
 
-    // 2. Instantiate inside the handler so build-time static collection never fails
-    const supabase = createClient(
-      supabaseUrl.startsWith('http') ? supabaseUrl : `https://${supabaseUrl}`,
-      supabaseAnonKey
-    );
+    const cleanKey = rawKey.replace(/["'\r\n]/g, '').trim();
 
-    // 3. Fetch products
-    const { data: products, error } = await supabase
-      .from('Product')
-      .select('*')
-      .order('createdAt', { ascending: false });
+    // 3. Instantiate Supabase Client
+    const supabase = createClient(cleanUrl, cleanKey);
+
+    // 4. Query Option 1: 'Product' table without non-existent createdAt ordering
+    const { data: products, error } = await supabase.from('Product').select('*');
 
     if (error) {
       console.error('Error fetching products for zyn-store:', error);
