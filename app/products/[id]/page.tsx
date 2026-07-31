@@ -17,6 +17,7 @@ interface Product {
   price: number;
   sizes: string[];
   images: string[];
+  image?: string;
 }
 
 const COLOR_OPTIONS = [
@@ -33,11 +34,11 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Selection States
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>(COLOR_OPTIONS[0].name);
-  
+
   // Cart & Favorites LocalStorage State
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -61,10 +62,14 @@ export default function ProductDetailPage() {
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const response = await fetch('/api/products');
+        // Explicitly bypass caching so Vercel returns live DB data
+        const response = await fetch('/api/products', { cache: 'no-store' });
         const data = await response.json();
+
         if (data.success && Array.isArray(data.products)) {
-          const found = data.products.find((p: Product) => p.id === productId);
+          const found = data.products.find(
+            (p: Product) => String(p.id) === String(productId)
+          );
           if (found) {
             setProduct(found);
             if (found.sizes && found.sizes.length > 0) {
@@ -78,7 +83,9 @@ export default function ProductDetailPage() {
         setLoading(false);
       }
     }
-    fetchProduct();
+    if (productId) {
+      fetchProduct();
+    }
   }, [productId]);
 
   const toggleFavorite = (id: string) => {
@@ -89,6 +96,11 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product) return;
+
+    const displayImage =
+      (Array.isArray(product.images) && product.images[0]) ||
+      product.image ||
+      'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop';
 
     setCart((prev) => {
       const existingIndex = prev.findIndex(
@@ -107,7 +119,7 @@ export default function ProductDetailPage() {
           id: product.id,
           name: `${product.name} (${selectedColor})`,
           price: product.price,
-          image: product.images[0] || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2',
+          image: displayImage,
           category: product.category,
           quantity: 1,
           selectedSize: selectedSize,
@@ -147,6 +159,10 @@ export default function ProductDetailPage() {
   }
 
   const isFav = favorites.includes(product.id);
+  const mainImage =
+    (Array.isArray(product.images) && product.images[0]) ||
+    product.image ||
+    'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop';
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-zinc-900 font-sans tracking-tight">
@@ -168,8 +184,9 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
           {/* Product Gallery Image */}
           <div className="relative aspect-[4/5] w-full rounded-2xl bg-[#f4f4f5] overflow-hidden border border-zinc-200">
+            {/* eslint-disable-next-html-element-for-img */}
             <img
-              src={product.images[0] || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2'}
+              src={mainImage}
               alt={product.name}
               className="h-full w-full object-cover object-center"
             />
@@ -230,7 +247,7 @@ export default function ProductDetailPage() {
                 {t('Product.selectSize')}
               </label>
               <div className="flex flex-wrap gap-2">
-                {product.sizes.map((size) => (
+                {(product.sizes || ['S', 'M', 'L', 'XL']).map((size) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
