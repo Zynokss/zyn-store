@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  Search, Heart, Loader2, ShoppingBag, 
-  Compass, ArrowUpDown 
+  Search, Heart, Loader2, 
+  Compass, ArrowUpDown, Sparkles, FilterX, ArrowRight
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -66,10 +66,9 @@ export default function CatalogPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch('/api/products');
+        const response = await fetch('/api/products', { cache: 'no-store' });
         const data = await response.json();
         
-        // Flexible check: works with both direct arrays and `{ success: true, products: [...] }`
         const productList = Array.isArray(data) ? data : data?.products;
         if (Array.isArray(productList)) {
           setProducts(productList);
@@ -114,10 +113,10 @@ export default function CatalogPage() {
     .filter((product) => {
       const matchesCategory =
         selectedCategory === 'All Items' ||
-        product.category.toLowerCase() === selectedCategory.toLowerCase();
+        product.category.toLowerCase().trim() === selectedCategory.toLowerCase().trim();
       const matchesSearch =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase());
+        product.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase().trim());
       const matchesFav = !showFavoritesOnly || favorites.includes(product.id);
       return matchesCategory && matchesSearch && matchesFav;
     })
@@ -128,7 +127,7 @@ export default function CatalogPage() {
     });
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-zinc-900 font-sans tracking-tight">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans antialiased selection:bg-[#ccff00] selection:text-black transition-colors duration-200">
       <Navbar
         favoriteCount={isMounted ? favorites.length : 0}
         cartCount={isMounted ? cart.reduce((sum, item) => sum + item.quantity, 0) : 0}
@@ -138,96 +137,137 @@ export default function CatalogPage() {
         isFavoritesFilterActive={showFavoritesOnly}
       />
 
-      <main className="flex-1 w-full space-y-6 sm:space-y-8 pb-16">
-        {/* CATALOG HEADER BANNER */}
-        <section className="bg-zinc-950 text-white border-b border-zinc-800 py-10 sm:py-16 px-4">
-          <div className="max-w-7xl mx-auto space-y-3 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900 border border-zinc-800 px-3 py-1 text-[10px] sm:text-xs font-mono text-[#ccff00]">
-              <span className="h-2 w-2 rounded-full bg-[#ccff00] animate-pulse"></span>
-              <span>FULL INVENTORY CATALOG</span>
+      <main className="flex-1 w-full pb-24 space-y-10">
+        {/* HERO SECTION BANNER */}
+        <section className="pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+          <div className="relative overflow-hidden rounded-3xl bg-zinc-900 dark:bg-zinc-900/90 border border-zinc-800 p-8 md:p-12 lg:p-14 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+            {/* Ambient background glow */}
+            <div className="absolute right-0 top-0 w-96 h-96 bg-[#ccff00]/10 blur-[100px] pointer-events-none rounded-full" />
+
+            <div className="space-y-6 max-w-xl z-10">
+              <div className="inline-flex items-center gap-2 rounded-full bg-zinc-950 border border-[#ccff00]/30 px-3.5 py-1 text-[11px] font-mono text-[#ccff00] shadow-inner">
+                <span className="h-2 w-2 rounded-full bg-[#ccff00] animate-pulse" />
+                <span>● 50% OFF ON EVERYTHING TODAY</span>
+              </div>
+
+              <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tight leading-none text-white">
+                ELEVATE IN YOUR <span className="text-[#ccff00]">UNIQUE</span> STYLE
+              </h1>
+
+              <p className="text-xs sm:text-sm text-zinc-400 font-medium leading-relaxed max-w-md">
+                Heavyweight essentials, engineered streetwear, and limited edition drops designed for timeless fit.
+              </p>
+
+              <button
+                onClick={() => {
+                  const element = document.getElementById('catalog-grid');
+                  element?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#ccff00] px-6 py-3.5 text-xs font-black uppercase text-black hover:bg-lime-300 transition-all active:scale-95 shadow-lg shadow-[#ccff00]/20 cursor-pointer"
+              >
+                Explore Drops <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
-            <h1 className="text-3xl sm:text-5xl font-black uppercase tracking-tight">
-              THE <span className="text-[#ccff00]">COLLECTION</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-zinc-400 max-w-xl font-medium">
-              Browse heavyweight essentials, custom streetwear drops, and limited edition items.
-            </p>
+
+            <div className="relative w-full md:w-1/2 aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl">
+              {/* eslint-disable-next-html-element-for-img */}
+              <img
+                src="https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=800&auto=format&fit=crop"
+                alt="Hero Streetwear"
+                className="h-full w-full object-cover object-center hover:scale-105 transition-transform duration-700"
+              />
+            </div>
           </div>
         </section>
 
-        {/* CONTROLS & FILTER BAR */}
-        <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-zinc-50 border border-zinc-200 p-4 rounded-2xl">
-            {/* Dynamic Category Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+        {/* STICKY CONTROLS & FILTER BAR */}
+        <section id="catalog-grid" className="sticky top-16 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-y border-zinc-200 dark:border-zinc-800/80 py-4 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
               {dynamicCategories.map((catName) => {
-                const isActive = selectedCategory === catName;
+                const isActive = selectedCategory === catName && !showFavoritesOnly;
                 return (
                   <button
                     key={catName}
                     onClick={() => { setSelectedCategory(catName); setShowFavoritesOnly(false); }}
-                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold uppercase whitespace-nowrap transition-all cursor-pointer ${
-                      isActive && !showFavoritesOnly
-                        ? 'bg-black text-white shadow-md'
-                        : 'bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200'
+                    className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all active:scale-95 cursor-pointer ${
+                      isActive
+                        ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black shadow-lg'
+                        : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800'
                     }`}
                   >
-                    {catName === 'All Items' && <Compass className="h-3.5 w-3.5 text-[#ccff00]" />}
+                    {catName === 'All Items' && <Compass className={`h-3.5 w-3.5 ${isActive ? 'text-white dark:text-black' : 'text-zinc-500 dark:text-[#ccff00]'}`} />}
                     <span>{catName}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Search Input & Sort Dropdown */}
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+            {/* Search Input & Sort Selector */}
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
                 <input
                   type="text"
                   placeholder={t('Categories.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-white py-2 pl-9 pr-3 text-xs font-medium text-zinc-900 placeholder-zinc-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/90 py-2 pl-9 pr-4 text-xs font-medium text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-black dark:focus:border-[#ccff00] focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-[#ccff00] transition-all"
                 />
               </div>
 
-              {/* Sort Selector */}
-              <div className="relative flex items-center bg-white border border-zinc-200 rounded-xl px-3 py-2">
-                <ArrowUpDown className="h-3.5 w-3.5 text-zinc-400 mr-2" />
+              {/* Sort Dropdown */}
+              <div className="relative flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full px-3.5 py-2">
+                <ArrowUpDown className="h-3.5 w-3.5 text-zinc-500 dark:text-[#ccff00] mr-2" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-transparent text-xs font-extrabold uppercase text-zinc-800 focus:outline-none cursor-pointer"
+                  className="bg-transparent text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer pr-1"
                 >
-                  <option value="featured">Featured</option>
-                  <option value="low-to-high">Price: Low to High</option>
-                  <option value="high-to-low">Price: High to Low</option>
+                  <option value="featured" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Featured</option>
+                  <option value="low-to-high" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Price: Low to High</option>
+                  <option value="high-to-low" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Price: High to Low</option>
                 </select>
               </div>
             </div>
+
+          </div>
+        </section>
+
+        {/* PRODUCT GRID SECTION */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between pb-6">
+            <h2 className="text-xl font-black uppercase tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
+              TOP PRODUCTS <span className="text-xs font-mono font-normal text-zinc-500">({filteredProducts.length})</span>
+            </h2>
           </div>
 
-          {/* PRODUCT GRID */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
-              <Loader2 className="h-8 w-8 animate-spin text-black mb-2" />
-              <p className="text-xs font-mono font-bold uppercase">{t('Checkout.processing')}</p>
+            <div className="flex flex-col items-center justify-center py-24 text-zinc-500 space-y-3">
+              <Loader2 className="h-8 w-8 animate-spin text-black dark:text-[#ccff00]" />
+              <p className="text-xs font-mono font-bold uppercase tracking-widest text-zinc-400">
+                Fetching live items...
+              </p>
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-20 bg-zinc-50 rounded-2xl border border-zinc-200">
-              <p className="text-sm font-bold uppercase text-zinc-500">
+            <div className="flex flex-col items-center justify-center py-20 px-4 bg-zinc-50 dark:bg-zinc-900/40 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800 text-center space-y-4">
+              <div className="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-400">
+                <FilterX className="h-5 w-5" />
+              </div>
+              <p className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 {showFavoritesOnly ? t('Account.noOrders') : 'No catalog items match your selected filters.'}
               </p>
               <button
                 onClick={() => { setSelectedCategory('All Items'); setSearchQuery(''); setShowFavoritesOnly(false); setSortBy('featured'); }}
-                className="mt-4 text-xs font-black text-black underline uppercase cursor-pointer"
+                className="inline-flex items-center gap-2 text-xs font-black text-black dark:text-[#ccff00] uppercase underline hover:text-zinc-700 dark:hover:text-lime-400 transition-colors cursor-pointer"
               >
                 Reset all catalog filters
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredProducts.map((product) => {
                 const isFav = isMounted && favorites.includes(product.id);
                 const displayImg =
@@ -237,10 +277,12 @@ export default function CatalogPage() {
                 return (
                   <div
                     key={product.id}
-                    className="group relative flex flex-col bg-white border border-zinc-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300"
+                    className="group relative flex flex-col bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl overflow-hidden hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-xl dark:hover:shadow-[#ccff00]/5 transition-all duration-300"
                   >
-                    <div className="relative aspect-[4/5] w-full bg-[#f4f4f5] overflow-hidden">
+                    {/* Image Box */}
+                    <div className="relative aspect-[4/5] w-full bg-zinc-100 dark:bg-zinc-950 overflow-hidden">
                       <Link href={`/products/${product.id}`} className="block h-full w-full">
+                        {/* eslint-disable-next-html-element-for-img */}
                         <img
                           src={displayImg}
                           alt={product.name}
@@ -248,14 +290,15 @@ export default function CatalogPage() {
                         />
                       </Link>
 
-                      <span className="absolute top-3 left-3 bg-black text-white text-[9px] font-mono font-bold px-2 py-0.5 uppercase rounded pointer-events-none">
-                        IN STOCK
+                      {/* Stock Badge */}
+                      <span className="absolute top-3.5 left-3.5 bg-black/80 backdrop-blur-md text-[#ccff00] border border-[#ccff00]/20 text-[9px] font-mono font-bold px-2.5 py-1 uppercase rounded-full pointer-events-none">
+                        ● IN STOCK
                       </span>
 
-                      {/* Favorite Button */}
+                      {/* Favorite Action Button */}
                       <button
                         onClick={(e) => toggleFavorite(product.id, e)}
-                        className="absolute right-3 top-3 rounded-full bg-white/90 p-2 text-zinc-700 shadow-sm hover:text-rose-500 transition-colors z-10 cursor-pointer"
+                        className="absolute right-3.5 top-3.5 rounded-full bg-white/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-700/60 p-2.5 text-zinc-700 dark:text-zinc-300 backdrop-blur-md hover:text-rose-500 hover:border-rose-500/50 transition-all z-10 cursor-pointer active:scale-90"
                         aria-label="Favorite"
                         type="button"
                       >
@@ -263,33 +306,38 @@ export default function CatalogPage() {
                       </button>
                     </div>
 
-                    <div className="p-4 flex flex-col flex-1 justify-between space-y-3">
-                      <Link href={`/products/${product.id}`} className="block">
-                        <p className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                    {/* Card Content */}
+                    <div className="p-4 flex flex-col flex-1 justify-between space-y-4">
+                      <Link href={`/products/${product.id}`} className="block space-y-1">
+                        <span className="text-[10px] font-mono font-bold text-zinc-500 dark:text-[#ccff00] uppercase tracking-widest">
                           {product.category}
-                        </p>
-                        <h3 className="text-xs font-extrabold uppercase text-zinc-900 line-clamp-1 mt-0.5 group-hover:underline">
+                        </span>
+                        <h3 className="text-sm font-black uppercase tracking-tight text-zinc-900 dark:text-white line-clamp-1 group-hover:text-black dark:group-hover:text-[#ccff00] transition-colors">
                           {product.name}
                         </h3>
                       </Link>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-zinc-100">
-                        <span className="text-sm font-black text-zinc-900">
-                          {product.price.toFixed(2)} MAD
-                        </span>
+                      {/* Price & Specs */}
+                      <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800/60">
+                        <div>
+                          <span className="text-base font-black text-zinc-900 dark:text-white">
+                            {product.price.toFixed(2)}
+                          </span>
+                          <span className="text-[10px] font-mono text-zinc-400 font-bold ml-1">MAD</span>
+                        </div>
 
-                        <div className="flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#ccff00] inline-block"></span>
-                          <span className="text-[10px] font-mono font-semibold text-zinc-400">{t('Product.inStock')}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-[#ccff00] animate-pulse" />
+                          <span className="text-[10px] font-mono font-semibold text-zinc-400 uppercase">In Stock</span>
                         </div>
                       </div>
 
-                      {/* View Product CTA */}
+                      {/* View Details Action */}
                       <Link
                         href={`/products/${product.id}`}
-                        className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-black py-2.5 text-xs font-black uppercase text-white hover:bg-[#ccff00] hover:text-black transition-all text-center"
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-black dark:bg-white py-3 text-xs font-black uppercase text-white dark:text-black hover:bg-[#ccff00] hover:text-black dark:hover:bg-[#ccff00] transition-all text-center active:scale-95 shadow-lg cursor-pointer"
                       >
-                        {t('Product.addToCart')}
+                        <Sparkles className="h-3.5 w-3.5" /> View Details
                       </Link>
                     </div>
                   </div>
@@ -300,7 +348,7 @@ export default function CatalogPage() {
         </section>
       </main>
 
-      {/* Slide-over Overlays */}
+      {/* Slide-over Drawer & Search Overlay */}
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
