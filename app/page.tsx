@@ -4,20 +4,13 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Search, Heart, Loader2, ShoppingBag, 
-  Shirt, Compass, Sparkles, SlidersHorizontal, ArrowUpDown 
+  Compass, ArrowUpDown 
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer, CartItem } from '@/components/store/CartDrawer';
 import { SearchModal } from '@/components/store/SearchModal';
 import { useTranslation } from '@/components/providers/IntlProvider';
-
-const CATEGORIES = [
-  { name: 'All Items', translationKey: 'Categories.all', icon: Compass },
-  { name: 'Tops', translationKey: 'Categories.tops', icon: Shirt },
-  { name: 'Bottoms', translationKey: 'Categories.bottoms', icon: Sparkles },
-  { name: 'Outerwear', translationKey: 'Categories.outerwear', icon: ShoppingBag },
-];
 
 interface Product {
   id: string;
@@ -75,8 +68,11 @@ export default function CatalogPage() {
       try {
         const response = await fetch('/api/products');
         const data = await response.json();
-        if (data.success && Array.isArray(data.products)) {
-          setProducts(data.products);
+        
+        // Flexible check: works with both direct arrays and `{ success: true, products: [...] }`
+        const productList = Array.isArray(data) ? data : data?.products;
+        if (Array.isArray(productList)) {
+          setProducts(productList);
         }
       } catch (error) {
         console.error('Failed to load products from API:', error);
@@ -107,6 +103,12 @@ export default function CatalogPage() {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // Dynamic category list inferred directly from database items
+  const dynamicCategories = [
+    'All Items',
+    ...Array.from(new Set(products.map((p) => p.category).filter(Boolean))),
+  ];
+
   // Filter & Sort Logic
   const filteredProducts = products
     .filter((product) => {
@@ -122,7 +124,7 @@ export default function CatalogPage() {
     .sort((a, b) => {
       if (sortBy === 'low-to-high') return a.price - b.price;
       if (sortBy === 'high-to-low') return b.price - a.price;
-      return 0; // Default featured sort
+      return 0;
     });
 
   return (
@@ -156,23 +158,22 @@ export default function CatalogPage() {
         {/* CONTROLS & FILTER BAR */}
         <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-zinc-50 border border-zinc-200 p-4 rounded-2xl">
-            {/* Category Filter Pills */}
+            {/* Dynamic Category Filter Pills */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
-              {CATEGORIES.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = selectedCategory === cat.name;
+              {dynamicCategories.map((catName) => {
+                const isActive = selectedCategory === catName;
                 return (
                   <button
-                    key={cat.name}
-                    onClick={() => { setSelectedCategory(cat.name); setShowFavoritesOnly(false); }}
+                    key={catName}
+                    onClick={() => { setSelectedCategory(catName); setShowFavoritesOnly(false); }}
                     className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold uppercase whitespace-nowrap transition-all cursor-pointer ${
                       isActive && !showFavoritesOnly
                         ? 'bg-black text-white shadow-md'
                         : 'bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200'
                     }`}
                   >
-                    <Icon className={`h-3.5 w-3.5 ${isActive && !showFavoritesOnly ? 'text-[#ccff00]' : 'text-zinc-500'}`} />
-                    <span>{t(cat.translationKey)}</span>
+                    {catName === 'All Items' && <Compass className="h-3.5 w-3.5 text-[#ccff00]" />}
+                    <span>{catName}</span>
                   </button>
                 );
               })}
@@ -191,7 +192,7 @@ export default function CatalogPage() {
                 />
               </div>
 
-              {/* Sort By Selector */}
+              {/* Sort Selector */}
               <div className="relative flex items-center bg-white border border-zinc-200 rounded-xl px-3 py-2">
                 <ArrowUpDown className="h-3.5 w-3.5 text-zinc-400 mr-2" />
                 <select
@@ -220,7 +221,7 @@ export default function CatalogPage() {
               </p>
               <button
                 onClick={() => { setSelectedCategory('All Items'); setSearchQuery(''); setShowFavoritesOnly(false); setSortBy('featured'); }}
-                className="mt-4 text-xs font-black text-black underline uppercase"
+                className="mt-4 text-xs font-black text-black underline uppercase cursor-pointer"
               >
                 Reset all catalog filters
               </button>
@@ -229,6 +230,10 @@ export default function CatalogPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {filteredProducts.map((product) => {
                 const isFav = isMounted && favorites.includes(product.id);
+                const displayImg =
+                  product.images?.[0] ||
+                  'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop';
+
                 return (
                   <div
                     key={product.id}
@@ -237,7 +242,7 @@ export default function CatalogPage() {
                     <div className="relative aspect-[4/5] w-full bg-[#f4f4f5] overflow-hidden">
                       <Link href={`/products/${product.id}`} className="block h-full w-full">
                         <img
-                          src={product.images[0] || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=800'}
+                          src={displayImg}
                           alt={product.name}
                           className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                         />
@@ -250,7 +255,7 @@ export default function CatalogPage() {
                       {/* Favorite Button */}
                       <button
                         onClick={(e) => toggleFavorite(product.id, e)}
-                        className="absolute right-3 top-3 rounded-full bg-white/90 p-2 text-zinc-700 shadow-sm hover:text-rose-500 transition-colors z-10"
+                        className="absolute right-3 top-3 rounded-full bg-white/90 p-2 text-zinc-700 shadow-sm hover:text-rose-500 transition-colors z-10 cursor-pointer"
                         aria-label="Favorite"
                         type="button"
                       >
