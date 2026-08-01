@@ -1,9 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-let supabaseInstance: SupabaseClient | null = null;
+const globalForSupabase = globalThis as unknown as {
+  supabaseInstance?: SupabaseClient;
+};
 
 export function getSupabase(): SupabaseClient {
-  if (supabaseInstance) return supabaseInstance;
+  if (globalForSupabase.supabaseInstance) {
+    return globalForSupabase.supabaseInstance;
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
   const key =
@@ -11,8 +15,14 @@ export function getSupabase(): SupabaseClient {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     'placeholder-key';
 
-  supabaseInstance = createClient(url, key);
-  return supabaseInstance;
+  const client = createClient(url, key);
+
+  // Cache on globalThis in development to prevent duplicate instances during HMR
+  if (process.env.NODE_ENV !== 'production') {
+    globalForSupabase.supabaseInstance = client;
+  }
+
+  return client;
 }
 
 // Proxy export maintains backward compatibility (e.g., supabase.from(...))
