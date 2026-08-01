@@ -1,111 +1,118 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
+import { supabase } from '@/lib/supabase';
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const { 
-      cart, 
-      formData, 
-      userId, 
-      shippingCost = 35, 
-      saveAddressToProfile 
-    } = await request.json();
+    const body = await req.json();
+    const { formData, cart, total, activeUserId, saveAddressToProfile } = body;
 
-    if (!cart || cart.length === 0) {
-      return NextResponse.json({ success: false, error: 'Empty cart' }, { status: 400 });
+    if (!formData?.email || !cart || cart.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required checkout details.' },
+        { status: 400 }
+      );
     }
 
-    if (!formData?.email || !formData?.firstName || !formData?.lastName || !formData?.address1 || !formData?.city || !formData?.phone) {
-      return NextResponse.json({ success: false, error: 'Missing required shipping details' }, { status: 400 });
-    }
+    const cleanEmail = formData.email.toLowerCase().trim();
+    const now = new Date().toISOString();
+    const orderId = `ord_${Date.now()}`;
 
-    // Calculate subtotal + shipping (35 MAD)
-    const subtotal = cart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
-    const grandTotal = subtotal + Number(shippingCost);
-
-    const orderId = `ZYN-${Date.now().toString().slice(-6)}`;
-    let activeUserId = userId || null;
-
-    // 1. Account Creation Logic (if user is guest and entered a password)
-    if (!activeUserId && formData.password && formData.password.trim().length > 0) {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: formData.email.toLowerCase().trim() },
-      });
-
-      if (!existingUser) {
-        const hashedPassword = await bcrypt.hash(formData.password, 10);
-        const newUser = await prisma.user.create({
-          data: {
-            email: formData.email.toLowerCase().trim(),
-            name: `${formData.firstName} ${formData.lastName}`,
-            password: hashedPassword,
-            phone: formData.phone,
-            address1: formData.address1,
-            address2: formData.address2 || null,
-            city: formData.city,
-            postalCode: formData.postalCode || null,
-          },
-        });
-        activeUserId = newUser.id;
-      } else {
-        activeUserId = existingUser.id;
-      }
-    }
-
-    // 2. Save/Update Profile Address if authenticated
+    // 1. Save/Update Profile Address if user is logged in
     if (activeUserId && saveAddressToProfile) {
       try {
-        await prisma.user.update({
-          where: { id: activeUserId },
-          data: {
-            phone: formData.phone,
-            address1: formData.address1,
+        await supabase
+          .from('User')
+          .update({
+            phone: formData.phone || null,
+            address1: formData.address1 || null,
             address2: formData.address2 || null,
-            city: formData.city,
+            city: formData.city || null,
             postalCode: formData.postalCode || null,
-          },
-        });
-      } catch (err) {
-        console.warn('Could not update user profile address:', err);
+            updatedAt: now,
+          })
+          .eq('id', activeUserId);
+      } catch (userErr) {
+        console.error('Could not update user profile address:', userErr);
       }
     }
 
-    // Format full address line
-    const fullAddress = [
+    // 2. Format full shipping address string
+    const addressDetails = [
       formData.address1,
-      formData.address2 ? `(${formData.address2})` : null,
-      `Tel: ${formData.phone}`
-    ].filter(Boolean).join(' ');
+      formData.address2,
+      `${formData.city || ''}, ${formData.postalCode || ''}`.trim(),
+      `Tel: ${formData.phone || ''}`,
+    ]
+      .filter(Boolean)
+      .join(' ');
 
-    // 3. Create Order with PENDING_PAYMENT status
-    const order = await prisma.order.create({
-      data: {
-        id: orderId,
-        userId: activeUserId,
-        email: formData.email.toLowerCase().trim(),
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        address: fullAddress,
-        city: formData.city,
-        state: 'Morocco',
-        zipCode: formData.postalCode || '00000',
-        total: grandTotal,
-        status: 'PENDING_PAYMENT',
-        items: {
-          create: cart.map((item: any) => ({
-            productId: item.id,
-            selectedSize: item.selectedSize || 'M',
-            quantity: item.quantity,
-            price: item.price,
-          })),
+    // 3. Create Order — including non-null `state` field
+    const { data: order, error: orderError } = await supabase
+      .from('Order')
+      .insert([
+        {
+          id: orderId,
+          userId: activeUserId || null,
+          email: cleanEmail,
+          firstName: formData.firstName || cleanEmail.split('@')[0],
+          lastName: formData.lastName || '',
+          address: addressDetails,
+          city: formData.city || '',
+          state: formData.state || formData.region || formData.city || '', // Prevents NULL constraint violation
+          zipCode: formData.postalCode || '',
+          total: total || 0,
+          status: 'PENDING_PAYMENT',
+          createdAt: now,
         },
+      ])
+      .select()
+      .single();
+
+    if (orderError) {
+      console.error('Transfer Order Error:', orderError);
+      return NextResponse.json(
+        { success: false, error: orderError.message },
+        { status: 500 }
+      );
+    }
+
+    // 4. Create Order Items
+    let createdItems: any[] = [];
+    if (cart && Array.isArray(cart) && cart.length > 0) {
+      const orderItemsPayload = cart.map((item: any) => ({
+        id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        orderId: order.id,
+        productId: item.product?.id || item.id,
+        selectedSize: item.selectedSize || 'DEFAULT',
+        quantity: item.quantity || 1,
+        price: item.product?.price || item.price || 0,
+        createdAt: now,
+      }));
+
+      const { data: insertedItems, error: itemsError } = await supabase
+        .from('OrderItem')
+        .insert(orderItemsPayload)
+        .select();
+
+      if (itemsError) {
+        console.error('Transfer Order Items Error:', itemsError);
+      } else {
+        createdItems = insertedItems || [];
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      order: {
+        ...order,
+        items: createdItems,
       },
     });
-
-    return NextResponse.json({ success: true, orderId: order.id });
-  } catch (error: any) {
-    console.error('Transfer Order Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (err: any) {
+    console.error('Transfer Order Server Exception:', err);
+    return NextResponse.json(
+      { success: false, error: err.message || 'Unexpected server error.' },
+      { status: 500 }
+    );
   }
 }
