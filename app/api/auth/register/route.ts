@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
@@ -16,9 +16,19 @@ export async function POST(req: Request) {
     const cleanEmail = email.toLowerCase().trim();
 
     // 1. Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: cleanEmail },
-    });
+    const { data: existingUser, error: checkError } = await supabase
+      .from('User')
+      .select('id')
+      .eq('email', cleanEmail)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('Check user error:', checkError);
+      return NextResponse.json(
+        { success: false, error: 'Database check failed.' },
+        { status: 500 }
+      );
+    }
 
     if (existingUser) {
       return NextResponse.json(
@@ -29,23 +39,39 @@ export async function POST(req: Request) {
 
     // 2. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    const now = new Date().toISOString();
 
-    // 3. Create user (schema will auto-assign role="CUSTOMER", createdAt, updatedAt, and cuid id)
-    const newUser = await prisma.user.create({
-      data: {
-        name: name?.trim() || cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password: hashedPassword,
-        role: 'CUSTOMER', // Matches your schema comment ("CUSTOMER" or "ADMIN")
-      },
-    });
+    // 3. Insert user into PostgreSQL public."User" table
+    const { data: newUser, error: insertError } = await supabase
+      .from('User')
+      .insert([
+        {
+          id: `usr_${Date.now()}`,
+          name: name?.trim() || cleanEmail.split('@')[0],
+          email: cleanEmail,
+          password: hashedPassword,
+          role: 'CUSTOMER',
+          createdAt: now,
+          updatedAt: now, // Satisfies PostgreSQL NOT NULL constraint
+        },
+      ])
+      .select('id, name, email')
+      .single();
+
+    if (insertError) {
+      console.error('Registration insert error:', insertError);
+      return NextResponse.json(
+        { success: false, error: insertError.message },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      user: { id: newUser.id, name: newUser.name, email: newUser.email },
+      user: newUser,
     });
   } catch (err: any) {
-    console.error('Registration API error:', err);
+    console.error('Registration API exception:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Unexpected server error.' },
       { status: 500 }

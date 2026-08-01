@@ -1,14 +1,7 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
-
-// Sanitize & resolve canonical site URL
-const getBaseUrl = () => {
-  const envUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'https://zynbrand.vercel.app';
-  const cleanUrl = envUrl.replace(/["']/g, '').trim();
-  return cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
-};
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -23,11 +16,14 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase().trim() },
-        });
+        // Fetch user via HTTPS REST
+        const { data: user, error } = await supabase
+          .from('User')
+          .select('*')
+          .eq('email', credentials.email.toLowerCase().trim())
+          .maybeSingle();
 
-        if (!user || !user.password) {
+        if (error || !user || !user.password) {
           return null;
         }
 
@@ -66,7 +62,6 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   secret: process.env.NEXTAUTH_SECRET || 'zyn-store-super-secret-key',
-  useSecureCookies: process.env.NODE_ENV === 'production',
 };
 
 const handler = NextAuth(authOptions);
