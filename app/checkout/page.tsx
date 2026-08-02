@@ -24,8 +24,8 @@ const SHIPPING_COST = 35.00; // Amana Flat Rate in MAD
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan', 
   'Meknès', 'Oujda', 'Kenitra', 'Nador', 'Safi', 'Mohammedia', 'El Jadida', 
-  'Beni Mellal', 'Taza', 'Khouribga', 'Kénitra', 'Larache', 'Ksar El Kebir', 
-  'Guelmim', 'Berrechid', 'Khemisset', 'Guelmim', 'Taourirt', 'Berkane', 
+  'Beni Mellal', 'Taza', 'Khouribga', 'Larache', 'Ksar El Kebir', 
+  'Guelmim', 'Berrechid', 'Khemisset', 'Taourirt', 'Berkane', 
   'Sidi Slimane', 'Errachidia', 'Taroudant', 'Essaouira', 'Dakhla', 'Laâyoune', 'Autre'
 ];
 
@@ -146,18 +146,19 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           cart,
           formData,
-          totalCost: grandTotal,
+          total: grandTotal,
           shippingCost: SHIPPING_COST,
           shippingMethod: 'AMANA_COLIS_POSTAUX',
-          userId: (session?.user as any)?.id || null,
-          saveAddressToProfile: true, // Saves address to user account profile
+          activeUserId: (session?.user as any)?.id || null,
+          saveAddressToProfile: true,
         }),
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.order?.id) {
         localStorage.removeItem('zyn_cart');
-        setPlacedOrderId(data.orderId);
+        setCart([]);
+        setPlacedOrderId(data.order.id);
       } else {
         setError(data.error || 'Impossible de valider la commande.');
       }
@@ -429,8 +430,8 @@ export default function CheckoutPage() {
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                         className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3 text-xs font-bold text-zinc-900 dark:text-white focus:border-black dark:focus:border-[#ccff00] focus:outline-none transition-all"
                       >
-                        {MOROCCAN_CITIES.map((city) => (
-                          <option key={city} value={city} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">{city}</option>
+                        {MOROCCAN_CITIES.map((city, idx) => (
+                          <option key={`${city}-${idx}`} value={city} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">{city}</option>
                         ))}
                       </select>
                     </div>
