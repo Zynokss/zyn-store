@@ -13,6 +13,7 @@ export interface CartItem {
   category: string;
   quantity: number;
   selectedSize?: string;
+  selectedColor?: string;
 }
 
 interface CartDrawerProps {
@@ -67,51 +68,67 @@ export function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, onRemoveI
                 </button>
               </div>
             ) : (
-              items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 p-3 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/50"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="h-20 w-16 object-cover rounded-xl bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
-                  />
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-xs font-extrabold uppercase text-zinc-900 dark:text-white line-clamp-1">{item.name}</h3>
-                        <button
-                          onClick={() => onRemoveItem(item.id)}
-                          className="text-zinc-400 hover:text-rose-500 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <p className="text-[10px] font-mono text-zinc-400 uppercase">{item.category}</p>
-                    </div>
+              items.map((item, index) => {
+                const itemKey = `${item.id}-${item.selectedSize || 'default'}-${item.selectedColor || 'default'}-${index}`;
 
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-xs font-black text-zinc-900 dark:text-white">{item.price * item.quantity} MAD</span>
-                      <div className="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900">
-                        <button
-                          onClick={() => onUpdateQuantity(item.id, -1)}
-                          className="px-2.5 py-0.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-l-xl transition-colors cursor-pointer"
-                        >
-                          -
-                        </button>
-                        <span className="px-2 text-xs font-mono font-bold text-zinc-900 dark:text-white">{item.quantity}</span>
-                        <button
-                          onClick={() => onUpdateQuantity(item.id, 1)}
-                          className="px-2.5 py-0.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-r-xl transition-colors cursor-pointer"
-                        >
-                          +
-                        </button>
+                return (
+                  <div
+                    key={itemKey}
+                    className="flex gap-4 p-3 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/50"
+                  >
+                    {/* eslint-disable-next-html-element-for-img */}
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-20 w-16 object-cover rounded-xl bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
+                    />
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-xs font-extrabold uppercase text-zinc-900 dark:text-white line-clamp-1">{item.name}</h3>
+                          <button
+                            onClick={() => onRemoveItem(item.id)}
+                            className="text-zinc-400 hover:text-rose-500 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <p className="text-[10px] font-mono text-zinc-400 uppercase mt-0.5">
+                          {item.category}
+                        </p>
+                        {(item.selectedSize || item.selectedColor) && (
+                          <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 mt-0.5">
+                            {item.selectedSize && <span>{t('Cart.size')}: {item.selectedSize}</span>}
+                            {item.selectedSize && item.selectedColor && <span> | </span>}
+                            {item.selectedColor && <span>Color: {item.selectedColor}</span>}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xs font-black text-zinc-900 dark:text-white">
+                          {(item.price * item.quantity).toFixed(2)} MAD
+                        </span>
+                        <div className="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900">
+                          <button
+                            onClick={() => onUpdateQuantity(item.id, -1)}
+                            className="px-2.5 py-0.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-l-xl transition-colors cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 text-xs font-mono font-bold text-zinc-900 dark:text-white">{item.quantity}</span>
+                          <button
+                            onClick={() => onUpdateQuantity(item.id, 1)}
+                            className="px-2.5 py-0.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-r-xl transition-colors cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

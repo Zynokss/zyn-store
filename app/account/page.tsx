@@ -20,6 +20,7 @@ import {
   ChevronUp,
   MapPin,
   Save,
+  XCircle,
 } from 'lucide-react';
 import { StoreLayout } from '@/components/layout/StoreLayout';
 import { useTranslation } from '@/components/providers/IntlProvider';
@@ -28,10 +29,12 @@ interface OrderItem {
   id: string;
   quantity: number;
   selectedSize: string;
+  selectedColor?: string;
   price: number;
   product: {
     name: string;
-    images: string[];
+    images?: string[];
+    image?: string;
   };
 }
 
@@ -96,7 +99,9 @@ export default function AccountPage() {
         // Fetch Orders
         const ordersRes = await fetch(`/api/orders/track?query=${encodeURIComponent(session.user.email)}`);
         const ordersData = await ordersRes.json();
-        if (ordersData.success) setOrders(ordersData.orders);
+        if (ordersData.success && Array.isArray(ordersData.orders)) {
+          setOrders(ordersData.orders);
+        }
 
         // Fetch Profile Details
         const profileRes = await fetch('/api/user/profile');
@@ -144,12 +149,12 @@ export default function AccountPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setProfileSuccess('Vos informations de livraison ont été mises à jour !');
+        setProfileSuccess(t('Account.saveSuccess'));
       } else {
-        setProfileError(data.error || 'Impossible de mettre à jour le profil.');
+        setProfileError(data.error || t('Account.saveError'));
       }
-    } catch (err) {
-      setProfileError('Erreur lors de la sauvegarde.');
+    } catch {
+      setProfileError(t('Account.saveError'));
     } finally {
       setSavingProfile(false);
     }
@@ -171,29 +176,46 @@ export default function AccountPage() {
   if (!session) return null;
 
   const getStatusBadge = (orderStatus: string) => {
-    switch (orderStatus.toUpperCase()) {
+    const s = String(orderStatus || '').toUpperCase();
+
+    switch (s) {
       case 'DELIVERED':
+      case 'COMPLETED':
         return (
           <span className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-[#ccff00] border border-emerald-200 dark:border-emerald-800/80 px-3 py-1 rounded-full text-[10px] font-black uppercase">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Livré
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 dark:text-[#ccff00]" /> {t('Status.delivered')}
           </span>
         );
       case 'SHIPPED':
         return (
           <span className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-sky-400 border border-blue-200 dark:border-blue-800/80 px-3 py-1 rounded-full text-[10px] font-black uppercase">
-            <Truck className="h-3.5 w-3.5" /> En cours d&apos;expédition
+            <Truck className="h-3.5 w-3.5 text-blue-500 dark:text-sky-400" /> {t('Status.shipped')}
+          </span>
+        );
+      case 'PROCESSING':
+        return (
+          <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80 px-3 py-1 rounded-full text-[10px] font-black uppercase">
+            <Clock className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" /> {t('Status.processing')}
+          </span>
+        );
+      case 'CANCELLED':
+      case 'CANCELED':
+        return (
+          <span className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 px-3 py-1 rounded-full text-[10px] font-black uppercase">
+            <XCircle className="h-3.5 w-3.5 text-rose-500 dark:text-rose-400" /> {t('Status.canceled')}
           </span>
         );
       case 'PENDING_PAYMENT':
         return (
           <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80 px-3 py-1 rounded-full text-[10px] font-black uppercase">
-            <Clock className="h-3.5 w-3.5" /> En attente du virement
+            <Clock className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" /> {t('Status.pendingPayment')}
           </span>
         );
+      case 'PENDING':
       default:
         return (
           <span className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">
-            <Package className="h-3.5 w-3.5" /> En cours de traitement
+            <Package className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" /> {t('Status.pendingConfirmation')}
           </span>
         );
     }
@@ -239,7 +261,7 @@ export default function AccountPage() {
                 : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
             }`}
           >
-            <Package className="h-4 w-4" /> Commandes ({orders.length})
+            <Package className="h-4 w-4" /> {t('Account.ordersTab')} ({orders.length})
           </button>
           <button
             onClick={() => setActiveTab('profile')}
@@ -249,7 +271,7 @@ export default function AccountPage() {
                 : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
             }`}
           >
-            <MapPin className="h-4 w-4" /> Mon Adresse &amp; Informations
+            <MapPin className="h-4 w-4" /> {t('Account.profileTab')}
           </button>
         </div>
 
@@ -290,7 +312,7 @@ export default function AccountPage() {
                             </span>
                           </div>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                            {order.items.length} article(s) - Total: <span className="font-bold text-zinc-900 dark:text-white">{order.total.toFixed(2)} MAD</span>
+                            {order.items?.length || 0} article(s) - Total: <span className="font-bold text-zinc-900 dark:text-white">{order.total.toFixed(2)} MAD</span>
                           </p>
                         </div>
                         <div className="flex items-center justify-between sm:justify-end gap-3">
@@ -324,18 +346,24 @@ export default function AccountPage() {
 
                           <div className="space-y-3">
                             <h4 className="text-[10px] font-mono font-bold uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">&#47;&#47; {t('Account.itemsOrdered')}</h4>
-                            {order.items.map((item) => (
+                            {(order.items || []).map((item) => (
                               <div key={item.id} className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                                 {/* eslint-disable-next-html-element-for-img */}
                                 <img
-                                  src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2'}
+                                  src={
+                                    item.product?.images?.[0] ||
+                                    item.product?.image ||
+                                    'https://images.unsplash.com/photo-1556905055-8f358a7a47b2'
+                                  }
                                   alt={item.product?.name || 'Produit'}
                                   className="h-12 w-10 object-cover rounded-lg bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
                                 />
                                 <div className="flex-1">
                                   <h5 className="text-xs font-black uppercase text-zinc-900 dark:text-white">{item.product?.name || 'Article'}</h5>
                                   <p className="text-[10px] font-mono text-zinc-400">
-                                    {t('Cart.size')}: {item.selectedSize} | {t('Cart.qty')}: {item.quantity}
+                                    {t('Cart.size')}: {item.selectedSize}
+                                    {item.selectedColor ? ` | Color: ${item.selectedColor}` : ''}
+                                    {' | '}{t('Cart.qty')}: {item.quantity}
                                   </p>
                                 </div>
                                 <span className="text-xs font-black text-zinc-900 dark:text-white">{(item.price * item.quantity).toFixed(2)} MAD</span>
@@ -359,7 +387,7 @@ export default function AccountPage() {
         {/* TAB 2: PROFILE & ADDRESS SETTINGS */}
         {activeTab === 'profile' && (
           <form onSubmit={handleSaveProfile} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 space-y-5 max-w-2xl shadow-sm">
-            <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-[#ccff00]">&#47;&#47; ADRESSE DE LIVRAISON PAR DÉFAUT</h2>
+            <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-[#ccff00]">&#47;&#47; {t('Account.defaultAddressHeader')}</h2>
 
             {profileSuccess && (
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-2xl flex items-center gap-2">
@@ -375,7 +403,7 @@ export default function AccountPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">Nom Complet</label>
+                <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">{t('Account.fullName')}</label>
                 <input
                   type="text"
                   required
@@ -385,7 +413,7 @@ export default function AccountPage() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">Téléphone</label>
+                <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">{t('phone')}</label>
                 <input
                   type="tel"
                   required
@@ -398,7 +426,7 @@ export default function AccountPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">Adresse Ligne 1</label>
+              <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">{t('Account.addressLine1')}</label>
               <input
                 type="text"
                 required
@@ -410,7 +438,7 @@ export default function AccountPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">Adresse Ligne 2 (Optionnel)</label>
+              <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">{t('Account.addressLine2')}</label>
               <input
                 type="text"
                 placeholder="Bâtiment, Étage, Repère..."
@@ -422,7 +450,7 @@ export default function AccountPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">Ville</label>
+                <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">{t('city')}</label>
                 <select
                   value={profileData.city}
                   onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
@@ -434,7 +462,7 @@ export default function AccountPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">Code Postal</label>
+                <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">{t('Account.postalCode')}</label>
                 <input
                   type="text"
                   placeholder="Code Postal"
@@ -450,7 +478,7 @@ export default function AccountPage() {
               disabled={savingProfile}
               className="flex items-center justify-center gap-2 rounded-2xl bg-black dark:bg-[#ccff00] px-6 py-3.5 text-xs font-black uppercase text-white dark:text-black hover:bg-[#ccff00] hover:text-black dark:hover:bg-lime-400 transition-all cursor-pointer shadow-md"
             >
-              {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Sauvegarder mon Adresse
+              {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t('Account.saveAddress')}
             </button>
           </form>
         )}

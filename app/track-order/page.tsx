@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Package, Clock, CheckCircle2, Truck, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, Package, Clock, CheckCircle2, Truck, AlertCircle, Loader2, XCircle } from 'lucide-react';
 import { StoreLayout } from '@/components/layout/StoreLayout';
 
 interface Order {
@@ -41,16 +41,44 @@ export default function TrackOrderPage() {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status.toUpperCase()) {
+  const getStatusDisplay = (status: string) => {
+    const s = String(status || '').toUpperCase();
+    
+    switch (s) {
       case 'DELIVERED':
-        return <CheckCircle2 className="h-5 w-5 text-emerald-500 dark:text-[#ccff00]" />;
+      case 'COMPLETED':
+        return {
+          label: 'LIVRÉ',
+          icon: <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-[#ccff00]" />,
+          colorClass: 'text-emerald-500 dark:text-[#ccff00]',
+        };
       case 'SHIPPED':
-        return <Truck className="h-5 w-5 text-blue-500 dark:text-sky-400" />;
+        return {
+          label: 'EXPÉDIÉ',
+          icon: <Truck className="h-4 w-4 text-blue-500 dark:text-sky-400" />,
+          colorClass: 'text-blue-500 dark:text-sky-400',
+        };
       case 'PROCESSING':
-        return <Clock className="h-5 w-5 text-amber-500 dark:text-amber-400" />;
+        return {
+          label: 'EN COURS DE TRAITEMENT',
+          icon: <Clock className="h-4 w-4 text-amber-500 dark:text-amber-400" />,
+          colorClass: 'text-amber-500 dark:text-amber-400',
+        };
+      case 'CANCELLED':
+      case 'CANCELED':
+        return {
+          label: 'CANCELED',
+          icon: <XCircle className="h-4 w-4 text-rose-500 dark:text-rose-400" />,
+          colorClass: 'text-rose-500 dark:text-rose-400',
+        };
+      case 'PENDING':
+      case 'PENDING_PAYMENT':
       default:
-        return <Package className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />;
+        return {
+          label: 'EN ATTENTE DE CONFIRMATION',
+          icon: <Package className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />,
+          colorClass: 'text-zinc-500 dark:text-zinc-400',
+        };
     }
   };
 
@@ -97,57 +125,60 @@ export default function TrackOrderPage() {
                 </p>
               </div>
             ) : (
-              orders.map((order) => (
-                <div
-                  key={order.id}
-                  className="border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-4 shadow-sm transition-colors duration-200"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800/80 pb-4">
-                    <div>
-                      <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 uppercase block">
-                        Order ID: {order.id}
-                      </span>
-                      <p className="text-xs font-black uppercase text-zinc-900 dark:text-white mt-0.5">
-                        Placed on {new Date(order.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 bg-white dark:bg-zinc-950 px-3.5 py-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm w-fit">
-                      {getStatusIcon(order.status)}
-                      <span className="text-xs font-black uppercase text-zinc-900 dark:text-white">
-                        {order.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3">
-                        {/* eslint-disable-next-html-element-for-img */}
-                        <img
-                          src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&amp;auto=format&amp;fit=crop'}
-                          alt={item.product?.name || 'Product Image'}
-                          className="h-12 w-10 object-cover rounded-xl bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
-                        />
-                        <div className="flex-1">
-                          <h4 className="text-xs font-extrabold uppercase text-zinc-900 dark:text-white">
-                            {item.product?.name}
-                          </h4>
-                          <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
-                            Size: {item.selectedSize || 'Standard'} | Qty: {item.quantity}
-                          </p>
-                        </div>
+              orders.map((order) => {
+                const statusMeta = getStatusDisplay(order.status);
+                return (
+                  <div
+                    key={order.id}
+                    className="border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-4 shadow-sm transition-colors duration-200"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800/80 pb-4">
+                      <div>
+                        <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 uppercase block">
+                          Order ID: {order.id}
+                        </span>
+                        <p className="text-xs font-black uppercase text-zinc-900 dark:text-white mt-0.5">
+                          Placed on {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center gap-2 bg-white dark:bg-zinc-950 px-3.5 py-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm w-fit">
+                        {statusMeta.icon}
+                        <span className={`text-xs font-black uppercase ${statusMeta.colorClass}`}>
+                          {statusMeta.label}
+                        </span>
+                      </div>
+                    </div>
 
-                  <div className="border-t border-zinc-200 dark:border-zinc-800/80 pt-3 flex justify-between items-center text-xs font-black uppercase">
-                    <span className="text-zinc-500 dark:text-zinc-400">Total Paid</span>
-                    <span className="text-zinc-900 dark:text-[#ccff00] font-black text-sm">
-                      {order.total.toFixed(2)} MAD
-                    </span>
+                    <div className="space-y-3">
+                      {order.items.map((item) => (
+                        <div key={item.id} className="flex items-center gap-3">
+                          {/* eslint-disable-next-html-element-for-img */}
+                          <img
+                            src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop'}
+                            alt={item.product?.name || 'Product Image'}
+                            className="h-12 w-10 object-cover rounded-xl bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
+                          />
+                          <div className="flex-1">
+                            <h4 className="text-xs font-extrabold uppercase text-zinc-900 dark:text-white">
+                              {item.product?.name}
+                            </h4>
+                            <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+                              Size: {item.selectedSize || 'Standard'} | Qty: {item.quantity}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="border-t border-zinc-200 dark:border-zinc-800/80 pt-3 flex justify-between items-center text-xs font-black uppercase">
+                      <span className="text-zinc-500 dark:text-zinc-400">Total Paid</span>
+                      <span className="text-zinc-900 dark:text-[#ccff00] font-black text-sm">
+                        {order.total.toFixed(2)} MAD
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}

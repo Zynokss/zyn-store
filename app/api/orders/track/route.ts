@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('query')?.trim();
@@ -15,8 +18,8 @@ export async function GET(request: Request) {
     const orders = await prisma.order.findMany({
       where: {
         OR: [
-          { id: query },
-          { email: cleanQuery },
+          { id: { equals: query, mode: 'insensitive' } },
+          { email: { equals: cleanQuery, mode: 'insensitive' } },
         ],
       },
       orderBy: {

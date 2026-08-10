@@ -25,9 +25,13 @@ export function Navbar({
   isFavoritesFilterActive = false,
 }: NavbarProps) {
   const { data: session } = useSession();
-  const { locale, setLocale, t } = useTranslation();
+  const { language, locale, setLanguage, setLocale, t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+
+  // Active language getter (supports both 'locale' and 'language' props)
+  const currentLang = locale || language || 'en';
+  const changeLanguage = setLocale || setLanguage;
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
@@ -44,14 +48,14 @@ export function Navbar({
         {/* Functional Navigation Links */}
         <nav className="hidden md:flex items-center gap-8 text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
           <Link href="/#catalog" className="hover:text-black dark:hover:text-[#ccff00] transition-colors">
-            {t('Navbar.catalog')}
+            {t('Navbar.catalog') !== 'Navbar.catalog' ? t('Navbar.catalog') : t('catalog')}
           </Link>
           <Link href="/#catalog" className="hover:text-black dark:hover:text-[#ccff00] transition-colors flex items-center gap-1">
             <span>New Arrivals</span>
             <span className="bg-[#ccff00] text-black text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">HOT</span>
           </Link>
           <Link href="/track-order" className="hover:text-black dark:hover:text-[#ccff00] transition-colors">
-            {t('Navbar.trackOrder')}
+            {t('Navbar.trackOrder') !== 'Navbar.trackOrder' ? t('Navbar.trackOrder') : t('trackOrder')}
           </Link>
         </nav>
 
@@ -77,27 +81,27 @@ export function Navbar({
           <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 rounded-full px-2 py-1 text-[10px] font-mono font-bold border border-zinc-200 dark:border-zinc-800">
             <Globe className="h-3.5 w-3.5 text-zinc-500" />
             <button
-              onClick={() => setLocale('en')}
-              className={`px-1.5 py-0.5 rounded transition-colors ${
-                locale === 'en' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+              onClick={() => changeLanguage('en')}
+              className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                currentLang === 'en' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
               }`}
               type="button"
             >
               EN
             </button>
             <button
-              onClick={() => setLocale('fr')}
-              className={`px-1.5 py-0.5 rounded transition-colors ${
-                locale === 'fr' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+              onClick={() => changeLanguage('fr')}
+              className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                currentLang === 'fr' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
               }`}
               type="button"
             >
               FR
             </button>
             <button
-              onClick={() => setLocale('ar')}
-              className={`px-1.5 py-0.5 rounded transition-colors ${
-                locale === 'ar' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+              onClick={() => changeLanguage('ar')}
+              className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                currentLang === 'ar' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
               }`}
               type="button"
             >

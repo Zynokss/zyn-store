@@ -1,53 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
   id         String   @id @default(cuid())
   email      String   @unique
-  password   String?  // Optional if using OAuth
+  password   String?
   name       String?
-  role       String   @default("CUSTOMER") // "CUSTOMER" or "ADMIN"
-  
-  // Saved shipping details for fast checkout
+  role       String   @default("CUSTOMER")
   phone      String?
   address1   String?
   address2   String?
   city       String?
   postalCode String?
-
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  orders Order[]
+  orders     Order[]
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   description String
   category    String
   price       Float
   sizes       String[]
+  colors      String[]    @default([])
   images      String[]
-  featured    Boolean  @default(false)
-  inStock     Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  featured    Boolean     @default(false)
+  inStock     Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
 }
 
 model Order {
-  id        String   @id @default(cuid())
-  userId    String?  // Nullable for guest checkouts
-  user      User?    @relation(fields: [userId], references: [id])
+  id        String      @id @default(cuid())
+  userId    String?
   email     String
   firstName String
   lastName  String
@@ -56,19 +51,20 @@ model Order {
   state     String
   zipCode   String
   total     Float
-  status    String   @default("PENDING_PAYMENT") // PENDING_PAYMENT, PROCESSING, SHIPPED, DELIVERED
-  createdAt DateTime @default(now())
-
-  items OrderItem[]
+  status    String      @default("PENDING_PAYMENT")
+  createdAt DateTime    @default(now())
+  user      User?       @relation(fields: [userId], references: [id])
+  items     OrderItem[]
 }
 
 model OrderItem {
-  id           String  @id @default(cuid())
-  orderId      String
-  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId    String
-  product      Product @relation(fields: [productId], references: [id])
-  selectedSize String
-  quantity     Int
-  price        Float
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String
+  selectedSize  String
+  selectedColor String?
+  quantity      Int
+  price         Float
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [productId], references: [id])
 }

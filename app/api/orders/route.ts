@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface OrderItemInput {
   productId?: string;
   selectedSize?: string;
+  selectedColor?: string;
   quantity?: number;
   price?: number;
   product?: {
@@ -16,6 +20,12 @@ interface OrderRecord {
   total?: number | string;
 }
 
+// OPTIONS: Preflight handling
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 });
+}
+
+// GET: Fetch all orders
 export async function GET() {
   try {
     const orders = await prisma.order.findMany({
@@ -53,6 +63,7 @@ export async function GET() {
   }
 }
 
+// POST: Create a new order
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -70,12 +81,13 @@ export async function POST(request: Request) {
         state,
         zipCode,
         total: total || 0,
-        status: 'COMPLETED',
+        status: 'PENDING_PAYMENT',
         items: {
           create: (items || []).map((item: OrderItemInput) => ({
             id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
             productId: item.product?.id || item.productId || '',
             selectedSize: item.selectedSize || 'DEFAULT',
+            selectedColor: item.selectedColor || null,
             quantity: item.quantity || 1,
             price: item.product?.price || item.price || 0,
           })),
@@ -99,6 +111,40 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { success: false, error: 'Database order creation failed' },
       { status: 400 }
+    );
+  }
+}
+
+// PATCH: Update order status
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const targetId = body.orderId || body.id;
+    const status = body.status;
+
+    if (!targetId || !status) {
+      return NextResponse.json(
+        { success: false, error: 'Order ID and status are required' },
+        { status: 400 }
+      );
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: String(targetId) },
+      data: {
+        status: String(status).toUpperCase() as any,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      order: updatedOrder,
+    });
+  } catch (error: unknown) {
+    console.error('Failed to update order status exception:', error);
+    return NextResponse.json(
+      { success: false, error: 'Database order status update failed' },
+      { status: 500 }
     );
   }
 }

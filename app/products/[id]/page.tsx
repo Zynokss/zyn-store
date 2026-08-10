@@ -16,15 +16,10 @@ interface Product {
   category: string;
   price: number;
   sizes: string[];
+  colors?: string[];
   images: string[];
   image?: string;
 }
-
-const COLOR_OPTIONS = [
-  { name: 'Pitch Black', hex: '#000000' },
-  { name: 'Studio Gray', hex: '#888888' },
-  { name: 'Earth Brown', hex: '#654321' },
-];
 
 export default function ProductDetailPage() {
   const { t } = useTranslation();
@@ -35,7 +30,7 @@ export default function ProductDetailPage() {
 
   // Selection States
   const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>(COLOR_OPTIONS[0].name);
+  const [selectedColor, setSelectedColor] = useState<string>('');
 
   // Cart & Favorites LocalStorage State
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -73,6 +68,9 @@ export default function ProductDetailPage() {
             if (found.sizes && found.sizes.length > 0) {
               setSelectedSize(found.sizes[0]);
             }
+            if (found.colors && found.colors.length > 0) {
+              setSelectedColor(found.colors[0]);
+            }
           }
         }
       } catch (err) {
@@ -97,11 +95,17 @@ export default function ProductDetailPage() {
     const displayImage =
       (Array.isArray(product.images) && product.images[0]) ||
       product.image ||
-      'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&amp;auto=format&amp;fit=crop';
+      'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop';
+
+    const hasColors = Array.isArray(product.colors) && product.colors.length > 0;
+    const displayName = hasColors && selectedColor ? `${product.name} (${selectedColor})` : product.name;
 
     setCart((prev) => {
       const existingIndex = prev.findIndex(
-        (item) => item.id === product.id && item.selectedSize === selectedSize
+        (item) =>
+          item.id === product.id &&
+          item.selectedSize === selectedSize &&
+          (hasColors ? item.selectedColor === selectedColor : true)
       );
       if (existingIndex > -1) {
         const updated = [...prev];
@@ -112,12 +116,13 @@ export default function ProductDetailPage() {
         ...prev,
         {
           id: product.id,
-          name: `${product.name} (${selectedColor})`,
+          name: displayName,
           price: product.price,
           image: displayImage,
           category: product.category,
           quantity: 1,
           selectedSize: selectedSize,
+          selectedColor: hasColors ? selectedColor : undefined,
         },
       ];
     });
@@ -160,7 +165,17 @@ export default function ProductDetailPage() {
   const mainImage =
     (Array.isArray(product.images) && product.images[0]) ||
     product.image ||
-    'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&amp;auto=format&amp;fit=crop';
+    'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop';
+
+  const hasColorVariants = Array.isArray(product.colors) && product.colors.length > 0;
+
+  // Add-to-cart translation string resolution with fallback
+  const addToCartText =
+    t('Product.addToCart') !== 'Product.addToCart'
+      ? t('Product.addToCart')
+      : t('addToCart') !== 'addToCart'
+      ? t('addToCart')
+      : 'ADD TO CART';
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white font-sans tracking-tight transition-colors duration-200">
@@ -212,34 +227,70 @@ export default function ProductDetailPage() {
               {product.description}
             </p>
 
-            <div className="space-y-2 border-t border-zinc-100 dark:border-zinc-800/80 pt-4">
-              <label className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                Color: <span className="text-zinc-900 dark:text-white">{selectedColor}</span>
-              </label>
-              <div className="flex items-center gap-3">
-                {COLOR_OPTIONS.map((c) => (
-                  <button
-                    key={c.name}
-                    onClick={() => setSelectedColor(c.name)}
-                    className={`h-8 w-8 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${
-                      selectedColor === c.name 
-                        ? 'border-black dark:border-[#ccff00] scale-110 shadow-sm' 
-                        : 'border-zinc-200 dark:border-zinc-700'
-                    }`}
-                    style={{ backgroundColor: c.hex }}
-                    title={c.name}
-                  >
-                    {selectedColor === c.name && (
-                      <Check className={`h-4 w-4 ${c.hex === '#000000' ? 'text-white' : 'text-black'}`} />
-                    )}
-                  </button>
-                ))}
+            {/* Render Color Options conditionally if specified for product */}
+            {hasColorVariants && (
+              <div className="space-y-2 border-t border-zinc-100 dark:border-zinc-800/80 pt-4">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Color: <span className="text-zinc-900 dark:text-white uppercase">{selectedColor}</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  {product.colors!.map((colorName) => {
+                    const cleanColor = colorName.trim();
+                    const isHex = cleanColor.startsWith('#');
+                    const lower = cleanColor.toLowerCase();
+
+                    const bgStyle = isHex
+                      ? cleanColor
+                      : lower.includes('black')
+                      ? '#000000'
+                      : lower.includes('white')
+                      ? '#ffffff'
+                      : lower.includes('red')
+                      ? '#ef4444'
+                      : lower.includes('orange')
+                      ? '#f97316'
+                      : lower.includes('gray') || lower.includes('grey')
+                      ? '#888888'
+                      : lower.includes('brown')
+                      ? '#654321'
+                      : lower.includes('blue')
+                      ? '#3b82f6'
+                      : lower.includes('green')
+                      ? '#22c55e'
+                      : '#27272a';
+
+                    return (
+                      <button
+                        key={cleanColor}
+                        type="button"
+                        onClick={() => setSelectedColor(cleanColor)}
+                        className={`h-8 w-8 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${
+                          selectedColor === cleanColor
+                            ? 'border-black dark:border-[#ccff00] scale-110 shadow-sm'
+                            : 'border-zinc-200 dark:border-zinc-700'
+                        }`}
+                        style={{ backgroundColor: bgStyle }}
+                        title={cleanColor}
+                      >
+                        {selectedColor === cleanColor && (
+                          <Check
+                            className={`h-4 w-4 ${
+                              bgStyle === '#ffffff' || lower.includes('white')
+                                ? 'text-black'
+                                : 'text-white'
+                            }`}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2 border-t border-zinc-100 dark:border-zinc-800/80 pt-4">
               <label className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                {t('Product.selectSize')}
+                {t('Product.selectSize') !== 'Product.selectSize' ? t('Product.selectSize') : 'Select Size'}
               </label>
               <div className="flex flex-wrap gap-2">
                 {(product.sizes || ['S', 'M', 'L', 'XL']).map((size) => (
@@ -263,7 +314,7 @@ export default function ProductDetailPage() {
                 onClick={handleAddToCart}
                 className="w-full flex items-center justify-center gap-2 rounded-2xl bg-black dark:bg-[#ccff00] py-4 text-xs font-black uppercase text-white dark:text-black hover:bg-[#ccff00] hover:text-black dark:hover:bg-lime-400 transition-all active:scale-95 shadow-lg cursor-pointer"
               >
-                <ShoppingBag className="h-4 w-4" /> {t('Product.addToCart')} - {product.price.toFixed(2)} MAD
+                <ShoppingBag className="h-4 w-4" /> {addToCartText} - {product.price.toFixed(2)} MAD
               </button>
             </div>
           </div>
