@@ -68,3 +68,15 @@ model OrderItem {
   order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product       Product  @relation(fields: [productId], references: [id])
 }
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("SUPER_ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("adminuser")
+}
