@@ -23,7 +23,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const savedCart = localStorage.getItem('zyn_cart');
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart));
+        const parsed = JSON.parse(savedCart);
+        queueMicrotask(() => setCart(parsed));
       } catch (e) {
         console.error('Failed to parse cart from localStorage', e);
       }

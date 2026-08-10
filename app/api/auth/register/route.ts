@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
@@ -16,19 +16,10 @@ export async function POST(req: Request) {
     const cleanEmail = email.toLowerCase().trim();
 
     // 1. Check if user already exists
-    const { data: existingUser, error: checkError } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', cleanEmail)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error('Check user error:', checkError);
-      return NextResponse.json(
-        { success: false, error: 'Database check failed.' },
-        { status: 500 }
-      );
-    }
+    const existingUser = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+      select: { id: true },
+    });
 
     if (existingUser) {
       return NextResponse.json(
@@ -39,41 +30,32 @@ export async function POST(req: Request) {
 
     // 2. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const now = new Date().toISOString();
 
-    // 3. Insert user into PostgreSQL public."User" table
-    const { data: newUser, error: insertError } = await supabase
-      .from('User')
-      .insert([
-        {
-          id: `usr_${Date.now()}`,
-          name: name?.trim() || cleanEmail.split('@')[0],
-          email: cleanEmail,
-          password: hashedPassword,
-          role: 'CUSTOMER',
-          createdAt: now,
-          updatedAt: now, // Satisfies PostgreSQL NOT NULL constraint
-        },
-      ])
-      .select('id, name, email')
-      .single();
-
-    if (insertError) {
-      console.error('Registration insert error:', insertError);
-      return NextResponse.json(
-        { success: false, error: insertError.message },
-        { status: 500 }
-      );
-    }
+    // 3. Create user in database via Prisma
+    const newUser = await prisma.user.create({
+      data: {
+        id: `usr_${Date.now()}`,
+        name: name?.trim() || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        password: hashedPassword,
+        role: 'CUSTOMER',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
 
     return NextResponse.json({
       success: true,
       user: newUser,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unexpected server error.';
     console.error('Registration API exception:', err);
     return NextResponse.json(
-      { success: false, error: err.message || 'Unexpected server error.' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

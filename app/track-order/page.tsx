@@ -26,15 +26,15 @@ export default function TrackOrderPage() {
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
-
     setLoading(true);
+
     try {
       const res = await fetch(`/api/orders/track?query=${encodeURIComponent(query.trim())}`);
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error tracking order:', err);
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ export default function TrackOrderPage() {
               <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-3xl space-y-2">
                 <AlertCircle className="h-8 w-8 text-zinc-400 dark:text-zinc-500 mx-auto" />
                 <p className="text-xs font-bold uppercase text-zinc-600 dark:text-zinc-400">
-                  No orders found matching "{query}"
+                  No orders found matching &quot;{query}&quot;
                 </p>
               </div>
             ) : (
@@ -111,7 +111,6 @@ export default function TrackOrderPage() {
                         Placed on {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-
                     <div className="flex items-center gap-2 bg-white dark:bg-zinc-950 px-3.5 py-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm w-fit">
                       {getStatusIcon(order.status)}
                       <span className="text-xs font-black uppercase text-zinc-900 dark:text-white">
@@ -123,8 +122,9 @@ export default function TrackOrderPage() {
                   <div className="space-y-3">
                     {order.items.map((item) => (
                       <div key={item.id} className="flex items-center gap-3">
+                        {/* eslint-disable-next-html-element-for-img */}
                         <img
-                          src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop'}
+                          src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&amp;auto=format&amp;fit=crop'}
                           alt={item.product?.name || 'Product Image'}
                           className="h-12 w-10 object-cover rounded-xl bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
                         />

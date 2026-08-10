@@ -1,7 +1,11 @@
-import NextAuth, { NextAuthOptions } from 'next-auth';
+import NextAuth, { NextAuthOptions, User as NextAuthUser } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+
+interface ExtendedUser extends NextAuthUser {
+  role?: string;
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,14 +20,13 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Fetch user via HTTPS REST
-        const { data: user, error } = await supabase
-          .from('User')
-          .select('*')
-          .eq('email', credentials.email.toLowerCase().trim())
-          .maybeSingle();
+        const user = await prisma.user.findUnique({
+          where: {
+            email: credentials.email.toLowerCase().trim(),
+          },
+        });
 
-        if (error || !user || !user.password) {
+        if (!user || !user.password) {
           return null;
         }
 
@@ -46,14 +49,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
+        token.role = (user as ExtendedUser).role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
+        (session.user as ExtendedUser).id = token.id as string;
+        (session.user as ExtendedUser).role = token.role as string;
       }
       return session;
     },

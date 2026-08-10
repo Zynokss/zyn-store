@@ -1,24 +1,13 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { PrismaClient } from '@prisma/client';
 
-// Safe proxy placeholder to prevent Prisma initialization crashes
-// while maintaining compatibility across legacy imports
-export const prisma = new Proxy(
-  {},
-  {
-    get(_target, prop) {
-      if (prop === '$disconnect') return async () => {};
-      return new Proxy(
-        {},
-        {
-          get() {
-            return async () => {
-              throw new Error(
-                'Prisma execution blocked: App migrated to Supabase HTTPS REST. Use @/lib/supabase.'
-              );
-            };
-          },
-        }
-      );
-    },
-  }
-) as any;
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

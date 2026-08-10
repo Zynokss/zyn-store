@@ -6,7 +6,7 @@ import en from '@/messages/en.json';
 import fr from '@/messages/fr.json';
 import ar from '@/messages/ar.json';
 
-const dictionaries: Record<string, any> = { en, fr, ar };
+const dictionaries: Record<string, Record<string, Record<string, string>>> = { en, fr, ar };
 
 interface IntlContextType {
   locale: string;
@@ -22,7 +22,7 @@ export function IntlProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem('zyn_locale');
     if (saved && ['en', 'fr', 'ar'].includes(saved)) {
-      setLocaleState(saved);
+      queueMicrotask(() => setLocaleState(saved));
       document.documentElement.dir = saved === 'ar' ? 'rtl' : 'ltr';
     }
   }, []);

@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { 
-  ArrowLeft, ShoppingBag, Building2, CheckCircle2, 
-  Copy, Check, Loader2, Truck, User, MapPin, AlertTriangle, Eye, EyeOff 
+import {
+  ArrowLeft, Building2, CheckCircle2,
+  Copy, Check, Loader2, Truck, AlertTriangle, Eye, EyeOff
 } from 'lucide-react';
-import { CartDrawer, CartItem } from '@/components/store/CartDrawer';
+import { CartItem } from '@/components/store/CartDrawer';
 import { useTranslation } from '@/components/providers/IntlProvider';
 import { StoreLayout } from '@/components/layout/StoreLayout';
 
@@ -22,18 +21,16 @@ const CIH_ACCOUNT_DETAILS = {
 const SHIPPING_COST = 35.00; // Amana Flat Rate in MAD
 
 const MOROCCAN_CITIES = [
-  'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan', 
-  'Meknès', 'Oujda', 'Kenitra', 'Nador', 'Safi', 'Mohammedia', 'El Jadida', 
-  'Beni Mellal', 'Taza', 'Khouribga', 'Larache', 'Ksar El Kebir', 
-  'Guelmim', 'Berrechid', 'Khemisset', 'Taourirt', 'Berkane', 
+  'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan',
+  'Meknès', 'Oujda', 'Kenitra', 'Nador', 'Safi', 'Mohammedia', 'El Jadida',
+  'Beni Mellal', 'Taza', 'Khouribga', 'Larache', 'Ksar El Kebir',
+  'Guelmim', 'Berrechid', 'Khemisset', 'Taourirt', 'Berkane',
   'Sidi Slimane', 'Errachidia', 'Taroudant', 'Essaouira', 'Dakhla', 'Laâyoune', 'Autre'
 ];
 
 export default function CheckoutPage() {
-  const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { t } = useTranslation();
-
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -45,17 +42,16 @@ export default function CheckoutPage() {
   const [activeStep, setActiveStep] = useState<number>(1);
   const [maxCompletedStep, setMaxCompletedStep] = useState<number>(1);
   const [showPassword, setShowPassword] = useState(false);
-
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    password: '', // Optional: Creates account if filled
-    address1: '', // Mandatory
-    address2: '', // Optional
+    password: '',
+    address1: '',
+    address2: '',
     city: 'Casablanca',
-    postalCode: '', // Optional
+    postalCode: '',
     note: '',
   });
 
@@ -63,23 +59,26 @@ export default function CheckoutPage() {
     const savedCart = localStorage.getItem('zyn_cart');
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        queueMicrotask(() => setCart(parsedCart));
       } catch (e) {
         console.error(e);
       }
     }
-    setLoading(false);
+    queueMicrotask(() => setLoading(false));
   }, []);
 
   // Pre-fill user data if authenticated
   useEffect(() => {
     if (session?.user?.email) {
-      setFormData((prev) => ({
-        ...prev,
-        email: session.user?.email || '',
-        firstName: session.user?.name?.split(' ')[0] || prev.firstName,
-        lastName: session.user?.name?.split(' ').slice(1).join(' ') || prev.lastName,
-      }));
+      queueMicrotask(() => {
+        setFormData((prev) => ({
+          ...prev,
+          email: session.user?.email || '',
+          firstName: session.user?.name?.split(' ')[0] || prev.firstName,
+          lastName: session.user?.name?.split(' ').slice(1).join(' ') || prev.lastName,
+        }));
+      });
     }
   }, [session]);
 
@@ -92,7 +91,6 @@ export default function CheckoutPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Validation functions for each step
   const validateStep1 = () => {
     if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.phone.trim()) {
       setError('Veuillez remplir tous les champs obligatoires des informations personnelles.');
@@ -149,11 +147,10 @@ export default function CheckoutPage() {
           total: grandTotal,
           shippingCost: SHIPPING_COST,
           shippingMethod: 'AMANA_COLIS_POSTAUX',
-          activeUserId: (session?.user as any)?.id || null,
+          activeUserId: (session?.user as { id?: string })?.id || null,
           saveAddressToProfile: true,
         }),
       });
-
       const data = await res.json();
       if (data.success && data.order?.id) {
         localStorage.removeItem('zyn_cart');
@@ -162,7 +159,8 @@ export default function CheckoutPage() {
       } else {
         setError(data.error || 'Impossible de valider la commande.');
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error(err);
       setError('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setSubmitting(false);
@@ -209,21 +207,18 @@ export default function CheckoutPage() {
             {/* CIH Coordonnées Card */}
             <div className="bg-zinc-950 text-white rounded-2xl p-6 space-y-4 shadow-xl border border-zinc-800">
               <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-                <span className="text-xs font-mono font-bold text-[#ccff00] uppercase">// COORDONNÉES CIH BANK</span>
+                <span className="text-xs font-mono font-bold text-[#ccff00] uppercase">&#47;&#47; COORDONNÉES CIH BANK</span>
                 <Building2 className="h-5 w-5 text-zinc-400" />
               </div>
-
               <div className="space-y-3 text-xs font-mono">
                 <div>
                   <span className="text-zinc-500 text-[10px] uppercase block">Montant Total</span>
                   <span className="text-lg font-black text-white">{grandTotal.toFixed(2)} MAD</span>
                 </div>
-
                 <div>
                   <span className="text-zinc-500 text-[10px] uppercase block">Titulaire du compte</span>
                   <span className="font-bold text-white uppercase">{CIH_ACCOUNT_DETAILS.accountHolder}</span>
                 </div>
-
                 <div>
                   <span className="text-zinc-500 text-[10px] uppercase block">RIB CIH (24 Chiffres)</span>
                   <div className="flex items-center justify-between bg-zinc-900 p-2.5 rounded-xl border border-zinc-800 mt-1">
@@ -233,7 +228,6 @@ export default function CheckoutPage() {
                     </button>
                   </div>
                 </div>
-
                 <div className="pt-2 border-t border-zinc-800">
                   <span className="text-amber-400 text-[10px] font-bold uppercase block">Motif du Virement Obligatoire</span>
                   <span className="text-sm font-black text-white tracking-widest">{placedOrderId}</span>
@@ -246,7 +240,7 @@ export default function CheckoutPage() {
             href="/account"
             className="w-full inline-block text-center rounded-xl bg-black dark:bg-[#ccff00] py-4 text-xs font-black uppercase text-white dark:text-black hover:bg-[#ccff00] hover:text-black dark:hover:bg-lime-400 transition-all cursor-pointer shadow-lg"
           >
-            Voir ma commande dans l'Espace Client
+            Voir ma commande dans l&apos;Espace Client
           </Link>
         </div>
       </StoreLayout>
@@ -273,7 +267,6 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Form Accordion */}
           <form onSubmit={handleCreateOrder} className="lg:col-span-7 space-y-4">
-            
             {/* STEP 1: INFORMATIONS PERSONNELLES */}
             <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900 overflow-hidden shadow-sm transition-colors duration-200">
               <div 
@@ -343,7 +336,6 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Optional Password Field to create account */}
                   {!session && (
                     <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
                       <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 flex items-center justify-between">
@@ -527,26 +519,23 @@ export default function CheckoutPage() {
                 <div className="p-5 space-y-5 bg-white dark:bg-zinc-900">
                   <div className="bg-zinc-950 text-white rounded-2xl p-5 space-y-4 border border-zinc-800">
                     <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                      <span className="text-[10px] font-mono text-[#ccff00] uppercase font-bold">// VIREMENT CIH BANK</span>
+                      <span className="text-[10px] font-mono text-[#ccff00] uppercase font-bold">&#47;&#47; VIREMENT CIH BANK</span>
                       <Building2 className="h-4 w-4 text-zinc-400" />
                     </div>
-
                     <p className="text-xs text-zinc-300">
                       Vous effectuerez le virement bancaire sur notre RIB CIH après confirmation.
                     </p>
-
                     <div className="bg-zinc-900 p-3 rounded-xl border border-zinc-800 text-xs font-mono">
                       <span className="text-zinc-500 text-[10px] block uppercase">RIB CIH Bank</span>
                       <span className="font-bold text-[#ccff00]">{CIH_ACCOUNT_DETAILS.rib}</span>
                     </div>
-
                     <div className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs space-y-1">
                       <div className="flex items-center gap-1.5 text-amber-400 font-mono font-bold text-[10px] uppercase">
                         <AlertTriangle className="h-3.5 w-3.5" />
                         <span>Motif de Virement Obligatoire</span>
                       </div>
                       <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                        Dès que vous cliquez sur <strong>Confirmer la commande</strong>, un N° de commande unique sera généré. Vous devez obligatoirement l'indiquer dans le motif du virement sur votre application CIH.
+                        Dès que vous cliquez sur <strong>Confirmer la commande</strong>, un N° de commande unique sera généré. Vous devez obligatoirement l&apos;indiquer dans le motif du virement sur votre application CIH.
                       </p>
                     </div>
                   </div>
@@ -562,7 +551,7 @@ export default function CheckoutPage() {
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 className="h-4 w-4" /> Confirmer la commande — {grandTotal.toFixed(2)} MAD
+                        <CheckCircle2 className="h-4 w-4" /> Confirmer la commande - {grandTotal.toFixed(2)} MAD
                       </>
                     )}
                   </button>
@@ -573,11 +562,12 @@ export default function CheckoutPage() {
 
           {/* Summary Box */}
           <div className="lg:col-span-5 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 h-fit space-y-4 transition-colors duration-200">
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-[#ccff00]">// {t('Checkout.summary')}</h2>
+            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-[#ccff00]">&#47;&#47; {t('Checkout.summary')}</h2>
             
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {cart.map((item) => (
                 <div key={item.id} className="flex items-center gap-3">
+                  {/* eslint-disable-next-html-element-for-img */}
                   <img src={item.image} alt={item.name} className="h-12 w-10 object-cover rounded-lg bg-zinc-200 dark:bg-zinc-800" />
                   <div className="flex-1">
                     <h4 className="text-xs font-black uppercase text-zinc-900 dark:text-white">{item.name}</h4>

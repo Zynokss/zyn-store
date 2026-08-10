@@ -12,7 +12,6 @@ export default function LoginPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -32,7 +31,6 @@ export default function LoginPage() {
           body: JSON.stringify(formData),
         });
         const data = await res.json();
-
         if (!data.success) {
           setError(data.error || 'Registration failed');
           setLoading(false);
@@ -52,7 +50,8 @@ export default function LoginPage() {
         router.push('/account');
         router.refresh();
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error(err);
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -146,7 +145,7 @@ export default function LoginPage() {
             >
               {isRegistering
                 ? 'Already have an account? Sign In'
-                : "Don't have an account? Create one"}
+                : 'Don\'t have an account? Create one'}
             </button>
           </div>
         </div>

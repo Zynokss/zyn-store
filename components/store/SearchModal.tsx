@@ -58,7 +58,7 @@ export function SearchModal({ isOpen, onClose, query, setQuery, products }: Sear
         <div className="max-h-96 overflow-y-auto p-4 space-y-2">
           {query.trim() && filtered.length === 0 ? (
             <div className="text-center py-10 text-xs font-mono font-bold uppercase text-zinc-400">
-              No results found for "{query}"
+              No results found for &quot;{query}&quot;
             </div>
           ) : (
             filtered.map((product) => (
@@ -69,6 +69,7 @@ export function SearchModal({ isOpen, onClose, query, setQuery, products }: Sear
                 className="flex items-center justify-between p-3 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors group"
               >
                 <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-html-element-for-img */}
                   <img
                     src={product.images?.[0] || 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop'}
                     alt={product.name}

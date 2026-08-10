@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,25 +12,27 @@ export async function GET(request: Request) {
   try {
     const cleanQuery = query.toLowerCase();
 
-    const { data: orders, error } = await supabase
-      .from('Order')
-      .select(`
-        *,
-        items:OrderItem (
-          *,
-          product:Product (*)
-        )
-      `)
-      .or(`id.eq.${query},email.eq.${cleanQuery}`)
-      .order('createdAt', { ascending: false });
-
-    if (error) {
-      console.error('Order tracking query error:', error);
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
+    const orders = await prisma.order.findMany({
+      where: {
+        OR: [
+          { id: query },
+          { email: cleanQuery },
+        ],
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
 
     return NextResponse.json({ success: true, orders: orders || [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Order tracking server exception:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch orders' }, { status: 500 });
   }

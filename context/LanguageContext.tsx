@@ -103,7 +103,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedLang = localStorage.getItem('zyn_lang') as Language;
     if (savedLang && ['en', 'fr', 'ar'].includes(savedLang)) {
-      setLanguageState(savedLang);
+      queueMicrotask(() => setLanguageState(savedLang));
     }
   }, []);
 

@@ -1,46 +1,27 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+interface RawProduct {
+  id: string | number;
+  name?: string;
+  description?: string;
+  category?: string;
+  price?: number;
+  sizes?: string[];
+  images?: string[];
+  image?: string;
+  inStock?: boolean;
+  slug?: string;
+}
+
 export async function GET() {
   try {
-    // 1. Get raw URL or fallback
-    const rawUrl =
-      process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      'https://ujfxkybkhqdpdjigkqei.supabase.co';
+    const products = await prisma.product.findMany();
 
-    // 2. Aggressively strip quotes, newlines, and surrounding spaces
-    let cleanUrl = rawUrl.replace(/["'\r\n]/g, '').trim();
-
-    // Ensure it begins strictly with http:// or https://
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-      cleanUrl = `https://${cleanUrl}`;
-    }
-
-    const rawKey =
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      'sb_publishable_t9b4bZCrElb8trjHmfFdkQ_fjDWOi0l';
-
-    const cleanKey = rawKey.replace(/["'\r\n]/g, '').trim();
-
-    // 3. Instantiate Supabase Client
-    const supabase = createClient(cleanUrl, cleanKey);
-
-    // 4. Query Option 1: 'Product' table without non-existent createdAt ordering
-    const { data: products, error } = await supabase.from('Product').select('*');
-
-    if (error) {
-      console.error('Error fetching products for zyn-store:', error);
-      return NextResponse.json(
-        { success: false, error: error.message, products: [] },
-        { status: 500 }
-      );
-    }
-
-    const formattedProducts = (products || []).map((p: any) => {
+    const formattedProducts = (products || []).map((p: RawProduct) => {
       const primaryImage =
         Array.isArray(p.images) && p.images.length > 0
           ? p.images[0]
@@ -65,10 +46,11 @@ export async function GET() {
       success: true,
       products: formattedProducts,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unexpected API error';
     console.error('Unexpected API error:', err);
     return NextResponse.json(
-      { success: false, error: err.message, products: [] },
+      { success: false, error: errorMessage, products: [] },
       { status: 500 }
     );
   }

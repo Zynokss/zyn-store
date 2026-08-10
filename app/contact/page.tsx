@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Mail, Phone, MessageSquare, Send, CheckCircle2, Loader2, Clock } from 'lucide-react';
+import { ArrowLeft, Mail, MessageSquare, Send, CheckCircle2, Loader2, Clock } from 'lucide-react';
 import { StoreLayout } from '@/components/layout/StoreLayout';
 
 export default function ContactPage() {
@@ -12,7 +12,6 @@ export default function ContactPage() {
     subject: 'Order Status Inquiry',
     message: '',
   });
-
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -22,20 +21,19 @@ export default function ContactPage() {
     setLoading(true);
     setError('');
 
-    try {
-      const res = await fetch('/api/contact', {
+    try {      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
       const data = await res.json();
       if (data.success) {
         setSubmitted(true);
       } else {
         setError(data.error || 'Failed to submit message.');
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error(err);
       setError('Connection error. Please try again.');
     } finally {
       setLoading(false);
@@ -54,7 +52,7 @@ export default function ContactPage() {
 
         <div className="text-center space-y-3 max-w-xl mx-auto">
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-500 dark:text-[#ccff00]">
-            // CUSTOMER SUPPORT
+            &#47;&#47; CUSTOMER SUPPORT
           </span>
           <h1 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-zinc-900 dark:text-white">
             GET IN TOUCH
@@ -68,8 +66,7 @@ export default function ContactPage() {
           {/* Quick Direct Info Cards */}
           <div className="lg:col-span-5 space-y-4">
             <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-white space-y-4 shadow-xl">
-              <h3 className="text-xs font-mono font-bold text-[#ccff00] uppercase">// DIRECT CONTACT</h3>
-
+              <h3 className="text-xs font-mono font-bold text-[#ccff00] uppercase">&#47;&#47; DIRECT CONTACT</h3>
               <div className="space-y-4 text-xs font-mono">
                 <div className="flex items-start gap-3">
                   <MessageSquare className="h-5 w-5 text-[#ccff00] flex-shrink-0 mt-0.5" />
@@ -103,7 +100,7 @@ export default function ContactPage() {
                   <Clock className="h-5 w-5 text-[#ccff00] flex-shrink-0 mt-0.5" />
                   <div>
                     <span className="text-zinc-500 text-[10px] uppercase block">Working Hours</span>
-                    <span className="font-bold text-white">Mon – Sat (09:00 - 19:00 GMT+1)</span>
+                    <span className="font-bold text-white">Mon - Sat (09:00 - 19:00 GMT+1)</span>
                   </div>
                 </div>
               </div>
@@ -111,7 +108,7 @@ export default function ContactPage() {
 
             {/* Policy Summary Card */}
             <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 space-y-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              <h4 className="font-bold uppercase text-zinc-900 dark:text-white">Shipping & Return Policies</h4>
+              <h4 className="font-bold uppercase text-zinc-900 dark:text-white">Shipping &amp; Return Policies</h4>
               <p className="leading-relaxed text-[11px]">
                 Orders ship nationwide via <strong>Amana Colis Postaux</strong> (24-48 hours delivery). Returns are accepted within 7 days of delivery for unworn items with tags attached.
               </p>
@@ -140,7 +137,7 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-[#ccff00]">
-                  // SEND A MESSAGE
+                  &#47;&#47; SEND A MESSAGE
                 </h3>
 
                 {error && (
@@ -191,7 +188,7 @@ export default function ContactPage() {
                     <option value="Order Status Inquiry">Order Status Inquiry</option>
                     <option value="Amana Tracking Issue">Amana Tracking Issue</option>
                     <option value="CIH Bank Payment Proof">CIH Bank Payment Proof</option>
-                    <option value="Sizing & Product Details">Sizing & Product Details</option>
+                    <option value="Sizing & Product Details">Sizing &amp; Product Details</option>
                     <option value="Other Question">Other Question</option>
                   </select>
                 </div>

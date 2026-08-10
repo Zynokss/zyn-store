@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -12,33 +12,28 @@ export async function POST(req: Request) {
       );
     }
 
-    const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ujfxkybkhqdpdjigkqei.supabase.co';
-    const cleanUrl = rawUrl.replace(/["'\r\n]/g, '').trim();
+    const cleanEmail = email.toLowerCase().trim();
 
-    const rawKey =
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      'sb_publishable_t9b4bZCrElb8trjHmfFdkQ_fjDWOi0l';
-    const cleanKey = rawKey.replace(/["'\r\n]/g, '').trim();
-
-    const supabase = createClient(cleanUrl, cleanKey);
-
-    // Insert into Newsletter table
-    const { error } = await supabase.from('Newsletter').insert([{ email: email.toLowerCase().trim() }]);
-
-    if (error && error.code !== '23505') { // Ignore unique constraint duplicate error code
-      console.error('Newsletter submission error:', error);
-      return NextResponse.json(
-        { success: false, error: 'Database error. Please try again later.' },
-        { status: 500 }
-      );
+    try {
+      await (prisma as unknown as { newsletter: { create: (data: unknown) => Promise<unknown> } }).newsletter.create({
+        data: { email: cleanEmail },
+      });
+    } catch (error: unknown) {
+      const code = (error as { code?: string })?.code;
+      if (code !== 'P2002') {
+        console.error('Newsletter submission error:', error);
+        return NextResponse.json(
+          { success: false, error: 'Database error. Please try again later.' },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
       success: true,
       message: 'Subscribed successfully!',
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Newsletter error:', err);
     return NextResponse.json(
       { success: false, error: 'Unexpected error occurred.' },

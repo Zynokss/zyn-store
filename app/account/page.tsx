@@ -52,10 +52,10 @@ const CIH_ACCOUNT_DETAILS = {
 };
 
 const MOROCCAN_CITIES = [
-  'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan', 
-  'Meknès', 'Oujda', 'Kenitra', 'Nador', 'Safi', 'Mohammedia', 'El Jadida', 
-  'Beni Mellal', 'Taza', 'Khouribga', 'Kénitra', 'Larache', 'Ksar El Kebir', 
-  'Guelmim', 'Berrechid', 'Khemisset', 'Taourirt', 'Berkane', 
+  'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan',
+  'Meknès', 'Oujda', 'Kenitra', 'Nador', 'Safi', 'Mohammedia', 'El Jadida',
+  'Beni Mellal', 'Taza', 'Khouribga', 'Kénitra', 'Larache', 'Ksar El Kebir',
+  'Guelmim', 'Berrechid', 'Khemisset', 'Taourirt', 'Berkane',
   'Sidi Slimane', 'Errachidia', 'Taroudant', 'Essaouira', 'Dakhla', 'Laâyoune', 'Autre'
 ];
 
@@ -63,7 +63,6 @@ export default function AccountPage() {
   const { t } = useTranslation();
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const [activeTab, setActiveTab] = useState<'orders' | 'profile'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -137,7 +136,6 @@ export default function AccountPage() {
     setSavingProfile(true);
     setProfileSuccess('');
     setProfileError('');
-
     try {
       const res = await fetch('/api/user/profile', {
         method: 'PUT',
@@ -177,13 +175,13 @@ export default function AccountPage() {
       case 'DELIVERED':
         return (
           <span className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-[#ccff00] border border-emerald-200 dark:border-emerald-800/80 px-3 py-1 rounded-full text-[10px] font-black uppercase">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Livrée
+            <CheckCircle2 className="h-3.5 w-3.5" /> Livré
           </span>
         );
       case 'SHIPPED':
         return (
           <span className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-sky-400 border border-blue-200 dark:border-blue-800/80 px-3 py-1 rounded-full text-[10px] font-black uppercase">
-            <Truck className="h-3.5 w-3.5" /> En cours d'expédition
+            <Truck className="h-3.5 w-3.5" /> En cours d&apos;expédition
           </span>
         );
       case 'PENDING_PAYMENT':
@@ -218,12 +216,11 @@ export default function AccountPage() {
               {session.user?.name ? session.user.name.charAt(0) : <User className="h-6 w-6" />}
             </div>
             <div>
-              <span className="text-[10px] font-mono text-[#ccff00] uppercase font-bold tracking-widest">// {t('Account.title')}</span>
+              <span className="text-[10px] font-mono text-[#ccff00] uppercase font-bold tracking-widest">&#47;&#47; {t('Account.title')}</span>
               <h1 className="text-2xl font-black uppercase text-white">{session.user?.name || 'Client'}</h1>
               <p className="text-xs text-zinc-400 font-medium">{session.user?.email}</p>
             </div>
           </div>
-
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
             className="flex items-center gap-2 rounded-xl bg-zinc-900 hover:bg-rose-600 px-4 py-2.5 text-xs font-black uppercase text-white transition-all border border-zinc-800 hover:border-rose-600 cursor-pointer"
@@ -237,8 +234,8 @@ export default function AccountPage() {
           <button
             onClick={() => setActiveTab('orders')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all cursor-pointer ${
-              activeTab === 'orders' 
-                ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black shadow-md' 
+              activeTab === 'orders'
+                ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black shadow-md'
                 : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
             }`}
           >
@@ -247,12 +244,12 @@ export default function AccountPage() {
           <button
             onClick={() => setActiveTab('profile')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all cursor-pointer ${
-              activeTab === 'profile' 
-                ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black shadow-md' 
+              activeTab === 'profile'
+                ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black shadow-md'
                 : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
             }`}
           >
-            <MapPin className="h-4 w-4" /> Mon Adresse & Informations
+            <MapPin className="h-4 w-4" /> Mon Adresse &amp; Informations
           </button>
         </div>
 
@@ -276,7 +273,6 @@ export default function AccountPage() {
               <div className="space-y-4">
                 {orders.map((order) => {
                   const isExpanded = expandedOrderId === order.id;
-
                   return (
                     <div
                       key={order.id}
@@ -290,14 +286,13 @@ export default function AccountPage() {
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-mono font-black text-zinc-900 dark:text-white uppercase">{t('Account.orderNo')} {order.id}</span>
                             <span className="text-[10px] font-mono text-zinc-400">
-                              • {new Date(order.createdAt).toLocaleDateString()}
+                              {new Date(order.createdAt).toLocaleDateString()}
                             </span>
                           </div>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                            {order.items.length} article(s) • Total: <span className="font-bold text-zinc-900 dark:text-white">{order.total.toFixed(2)} MAD</span>
+                            {order.items.length} article(s) - Total: <span className="font-bold text-zinc-900 dark:text-white">{order.total.toFixed(2)} MAD</span>
                           </p>
                         </div>
-
                         <div className="flex items-center justify-between sm:justify-end gap-3">
                           {getStatusBadge(order.status)}
                           {isExpanded ? <ChevronUp className="h-5 w-5 text-zinc-400" /> : <ChevronDown className="h-5 w-5 text-zinc-400" />}
@@ -309,13 +304,12 @@ export default function AccountPage() {
                           {order.status === 'PENDING_PAYMENT' && (
                             <div className="bg-zinc-950 text-white rounded-2xl p-4 space-y-3 border border-zinc-800">
                               <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                                <span className="text-[10px] font-mono font-bold text-[#ccff00] uppercase">// CIH BANK</span>
+                                <span className="text-[10px] font-mono font-bold text-[#ccff00] uppercase">&#47;&#47; CIH BANK</span>
                                 <Building2 className="h-4 w-4 text-zinc-400" />
                               </div>
                               <p className="text-xs text-zinc-300">
                                 {t('Account.transferNotice')} <span className="font-bold text-white">{order.total.toFixed(2)} MAD</span>:
                               </p>
-
                               <div className="flex items-center justify-between bg-zinc-900 p-2.5 rounded-xl border border-zinc-800 text-xs font-mono">
                                 <span className="font-bold text-[#ccff00]">{CIH_ACCOUNT_DETAILS.rib}</span>
                                 <button
@@ -329,9 +323,10 @@ export default function AccountPage() {
                           )}
 
                           <div className="space-y-3">
-                            <h4 className="text-[10px] font-mono font-bold uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">// {t('Account.itemsOrdered')}</h4>
+                            <h4 className="text-[10px] font-mono font-bold uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">&#47;&#47; {t('Account.itemsOrdered')}</h4>
                             {order.items.map((item) => (
                               <div key={item.id} className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                                {/* eslint-disable-next-html-element-for-img */}
                                 <img
                                   src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2'}
                                   alt={item.product?.name || 'Produit'}
@@ -364,7 +359,7 @@ export default function AccountPage() {
         {/* TAB 2: PROFILE & ADDRESS SETTINGS */}
         {activeTab === 'profile' && (
           <form onSubmit={handleSaveProfile} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 space-y-5 max-w-2xl shadow-sm">
-            <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-[#ccff00]">// ADRESSE DE LIVRAISON PAR DÉFAUT</h2>
+            <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-[#ccff00]">&#47;&#47; ADRESSE DE LIVRAISON PAR DÉFAUT</h2>
 
             {profileSuccess && (
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-2xl flex items-center gap-2">
@@ -389,7 +384,6 @@ export default function AccountPage() {
                   className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3 text-xs font-bold text-zinc-900 dark:text-white focus:border-black dark:focus:border-[#ccff00] focus:outline-none transition-all"
                 />
               </div>
-
               <div>
                 <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">Téléphone</label>
                 <input
@@ -439,7 +433,6 @@ export default function AccountPage() {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">Code Postal</label>
                 <input

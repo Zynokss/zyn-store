@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
+
+interface CartItem {
+  id?: string;
+  selectedSize?: string;
+  quantity?: number;
+  price?: number;
+  product?: {
+    id?: string;
+    price?: number;
+  };
+}
 
 export async function POST(req: Request) {
   try {
@@ -14,29 +25,25 @@ export async function POST(req: Request) {
     }
 
     const cleanEmail = formData.email.toLowerCase().trim();
-    const now = new Date().toISOString();
     const orderId = `ord_${Date.now()}`;
 
-    // 1. Save/Update Profile Address if user is logged in
     if (activeUserId && saveAddressToProfile) {
       try {
-        await supabase
-          .from('User')
-          .update({
+        await prisma.user.update({
+          where: { id: activeUserId },
+          data: {
             phone: formData.phone || null,
             address1: formData.address1 || null,
             address2: formData.address2 || null,
             city: formData.city || null,
             postalCode: formData.postalCode || null,
-            updatedAt: now,
-          })
-          .eq('id', activeUserId);
+          },
+        });
       } catch (userErr) {
         console.error('Could not update user profile address:', userErr);
       }
     }
 
-    // 2. Format full shipping address string
     const addressDetails = [
       formData.address1,
       formData.address2,
@@ -46,72 +53,43 @@ export async function POST(req: Request) {
       .filter(Boolean)
       .join(' ');
 
-    // 3. Create Order — including non-null `state` field
-    const { data: order, error: orderError } = await supabase
-      .from('Order')
-      .insert([
-        {
-          id: orderId,
-          userId: activeUserId || null,
-          email: cleanEmail,
-          firstName: formData.firstName || cleanEmail.split('@')[0],
-          lastName: formData.lastName || '',
-          address: addressDetails,
-          city: formData.city || '',
-          state: formData.state || formData.region || formData.city || '', // Prevents NULL constraint violation
-          zipCode: formData.postalCode || '',
-          total: total || 0,
-          status: 'PENDING_PAYMENT',
-          createdAt: now,
+    const order = await prisma.order.create({
+      data: {
+        id: orderId,
+        userId: activeUserId || null,
+        email: cleanEmail,
+        firstName: formData.firstName || cleanEmail.split('@')[0],
+        lastName: formData.lastName || '',
+        address: addressDetails,
+        city: formData.city || '',
+        state: formData.state || formData.region || formData.city || '',
+        zipCode: formData.postalCode || '',
+        total: total || 0,
+        status: 'PENDING_PAYMENT',
+        items: {
+          create: cart.map((item: CartItem) => ({
+            id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            productId: item.product?.id || item.id || '',
+            selectedSize: item.selectedSize || 'DEFAULT',
+            quantity: item.quantity || 1,
+            price: item.product?.price || item.price || 0,
+          })),
         },
-      ])
-      .select()
-      .single();
-
-    if (orderError) {
-      console.error('Transfer Order Error:', orderError);
-      return NextResponse.json(
-        { success: false, error: orderError.message },
-        { status: 500 }
-      );
-    }
-
-    // 4. Create Order Items
-    let createdItems: any[] = [];
-    if (cart && Array.isArray(cart) && cart.length > 0) {
-      const orderItemsPayload = cart.map((item: any) => ({
-        id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        orderId: order.id,
-        productId: item.product?.id || item.id,
-        selectedSize: item.selectedSize || 'DEFAULT',
-        quantity: item.quantity || 1,
-        price: item.product?.price || item.price || 0,
-        createdAt: now,
-      }));
-
-      const { data: insertedItems, error: itemsError } = await supabase
-        .from('OrderItem')
-        .insert(orderItemsPayload)
-        .select();
-
-      if (itemsError) {
-        console.error('Transfer Order Items Error:', itemsError);
-      } else {
-        createdItems = insertedItems || [];
-      }
-    }
+      },
+      include: {
+        items: true,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      order: {
-        ...order,
-        items: createdItems,
-      },
+      order,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unexpected server error.';
     console.error('Transfer Order Server Exception:', err);
     return NextResponse.json(
-      { success: false, error: err.message || 'Unexpected server error.' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
