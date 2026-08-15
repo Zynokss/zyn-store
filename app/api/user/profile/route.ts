@@ -1,19 +1,24 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+async function getSessionUser() {
+  const { data: session } = (await auth.getSession()) as {
+    data?: { user?: { id?: string; email?: string; name?: string } } | null;
+  };
+  if (!session?.user?.email) return null;
+  return { email: session.user.email.toLowerCase().trim() };
+}
+
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  const user = await getSessionUser();
+  if (!user) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email.toLowerCase().trim(),
-      },
+    const profile = await prisma.user.findUnique({
+      where: { email: user.email },
       select: {
         id: true,
         name: true,
@@ -26,7 +31,7 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ success: true, user });
+    return NextResponse.json({ success: true, user: profile });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user';
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
@@ -34,8 +39,8 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  const user = await getSessionUser();
+  if (!user) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -44,9 +49,7 @@ export async function PUT(request: Request) {
     const { name, phone, address1, address2, city, postalCode } = body;
 
     const updatedUser = await prisma.user.update({
-      where: {
-        email: session.user.email.toLowerCase().trim(),
-      },
+      where: { email: user.email },
       data: {
         name,
         phone,

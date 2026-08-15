@@ -2,16 +2,31 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  category: 'Tops' | 'Bottoms' | 'Outerwear' | 'Accessories';
+  category: string;
   price: number;
-  sizes: ('S' | 'M' | 'L' | 'XL')[];
+  sizes: string[];
+  colors?: string[];
   images: string[];
-  inStock: boolean;
+  image?: string;
+  inStock?: boolean;
   featured?: boolean;
+  slug?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CartItem {
-  product: Product;
-  selectedSize: string;
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
   quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
+}
+
+export interface CatalogProduct extends Product {
+  formattedPrice?: string;
+  primaryImage?: string;
 }

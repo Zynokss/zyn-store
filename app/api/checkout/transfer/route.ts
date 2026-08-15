@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyUserSession } from '@/lib/adminAuth';
+
+const SHIPPING_COST = 35;
+const FREE_SHIPPING_THRESHOLD = 500;
 
 interface CartItem {
   id?: string;
   selectedSize?: string;
+  selectedColor?: string;
   quantity?: number;
   price?: number;
   product?: {
@@ -12,10 +17,10 @@ interface CartItem {
   };
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { formData, cart, total, activeUserId, saveAddressToProfile } = body;
+    const { formData, cart, saveAddressToProfile } = body;
 
     if (!formData?.email || !cart || cart.length === 0) {
       return NextResponse.json(
@@ -24,8 +29,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const cleanEmail = formData.email.toLowerCase().trim();
-    const orderId = `ord_${Date.now()}`;
+    if (!formData.firstName || !formData.lastName || !formData.address1 || !formData.city || !formData.phone) {
+      return NextResponse.json(
+        { success: false, error: 'Please complete all required shipping fields.' },
+        { status: 400 }
+      );
+    }
+
+    const cleanEmail = String(formData.email).toLowerCase().trim();
+    const user = await verifyUserSession(req);
+    let activeUserId = user?.id || body.activeUserId || null;
+
+    if (!activeUserId) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: cleanEmail },
+      });
+      if (existingUser) {
+        activeUserId = existingUser.id;
+      }
+    }
 
     if (activeUserId && saveAddressToProfile) {
       try {
@@ -44,6 +66,60 @@ export async function POST(req: Request) {
       }
     }
 
+    const productIds = cart
+      .map((i: CartItem) => i.product?.id || i.id)
+      .filter(Boolean);
+
+    const dbProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, price: true, inStock: true, name: true },
+    });
+
+    const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+    const outOfStock: string[] = [];
+    const missingProducts: string[] = [];
+
+    dbProducts.forEach((p) => {
+      if (!p.inStock) outOfStock.push(p.name || p.id);
+    });
+    productIds.forEach((pid: string) => {
+      if (!productMap.has(pid)) missingProducts.push(pid);
+    });
+
+    if (outOfStock.length > 0) {
+      return NextResponse.json(
+        { success: false, error: `Out of stock items: ${outOfStock.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    let subtotal = 0;
+    const lineItems = cart.map((item: CartItem) => {
+      const pid = item.product?.id || item.id || '';
+      const product = productMap.get(pid);
+      const verifiedPrice = product?.price || item.price || 0;
+      const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
+      const lineTotal = verifiedPrice * qty;
+      subtotal += lineTotal;
+      return {
+        productId: pid,
+        selectedSize: item.selectedSize || 'DEFAULT',
+        selectedColor: item.selectedColor || null,
+        quantity: qty,
+        price: verifiedPrice,
+      };
+    });
+
+    if (subtotal === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Order subtotal could not be verified.' },
+        { status: 400 }
+      );
+    }
+
+    const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+    const verifiedGrandTotal = Number((subtotal + shipping).toFixed(2));
+
     const addressDetails = [
       formData.address1,
       formData.address2,
@@ -55,35 +131,36 @@ export async function POST(req: Request) {
 
     const order = await prisma.order.create({
       data: {
-        id: orderId,
         userId: activeUserId || null,
         email: cleanEmail,
-        firstName: formData.firstName || cleanEmail.split('@')[0],
-        lastName: formData.lastName || '',
+        firstName: String(formData.firstName).trim(),
+        lastName: String(formData.lastName).trim(),
         address: addressDetails,
-        city: formData.city || '',
-        state: formData.state || formData.region || formData.city || '',
-        zipCode: formData.postalCode || '',
-        total: total || 0,
+        city: String(formData.city || '').trim(),
+        state: String(formData.state || formData.region || formData.city || '').trim(),
+        zipCode: String(formData.postalCode || '').trim(),
+        total: verifiedGrandTotal,
         status: 'PENDING_PAYMENT',
-        items: {
-          create: cart.map((item: CartItem) => ({
-            id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-            productId: item.product?.id || item.id || '',
-            selectedSize: item.selectedSize || 'DEFAULT',
-            quantity: item.quantity || 1,
-            price: item.product?.price || item.price || 0,
-          })),
-        },
+        items: { create: lineItems },
       },
-      include: {
-        items: true,
-      },
+      include: { items: true },
     });
+
+    const bankDetails = {
+      bankName: process.env.CIH_BANK_NAME || 'CIH BANK',
+      accountHolder: process.env.CIH_ACCOUNT_HOLDER || 'ACHRAF MLILOU',
+      rib: process.env.CIH_RIB || '230726251607921102440031',
+      whatsappProof: process.env.CIH_WHATSAPP || '+212600000000',
+      transferReason: order.id,
+    };
 
     return NextResponse.json({
       success: true,
       order,
+      verifiedGrandTotal,
+      subtotal: Number(subtotal.toFixed(2)),
+      shipping,
+      bankDetails,
     });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unexpected server error.';

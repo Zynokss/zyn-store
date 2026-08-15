@@ -15,3 +15,58 @@
     @apply bg-zinc-950 text-white;
   }
 }
+
+@layer neon-auth-theme {
+  :root {
+    --background: #ffffff;
+    --foreground: #09090b;
+    --card: #ffffff;
+    --card-foreground: #09090b;
+    --popover: #ffffff;
+    --popover-foreground: #09090b;
+    --primary: #000000;
+    --primary-foreground: #fafafa;
+    --secondary: #fafafa;
+    --secondary-foreground: #09090b;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --accent: #ccff00;
+    --accent-foreground: #000000;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #e4e4e7;
+    --input: #e4e4e7;
+    --ring: #ccff00;
+    --radius: 12px;
+  }
+
+  .dark {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --card: #18181b;
+    --card-foreground: #fafafa;
+    --popover: #18181b;
+    --popover-foreground: #fafafa;
+    --primary: #ccff00;
+    --primary-foreground: #000000;
+    --secondary: #27272a;
+    --secondary-foreground: #fafafa;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --accent: #ccff00;
+    --accent-foreground: #000000;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #ccff00;
+  }
+}
+
+.neon-auth-root *,
+.neon-auth-root *::before,
+.neon-auth-root *::after {
+  box-sizing: border-box;
+  border-color: var(--neon-border, var(--border, #e4e4e7));
+  outline-color: var(--neon-ring, var(--ring, #ccff00));
+}

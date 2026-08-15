@@ -1,166 +1,288 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { Search, Heart, SlidersHorizontal } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, SlidersHorizontal, X, Heart } from 'lucide-react';
+import { Product } from '@/lib/types';
+import { useCart } from '@/lib/CartContext';
+import { ProductCard } from './ProductCard';
 
-const CATEGORIES = ['All Items', 'Tops', 'Bottoms', 'Outerwear', 'Accessories', 'Streetwear'];
+const DEFAULT_CATEGORIES = [
+  'All Items',
+  'Tops',
+  'Bottoms',
+  'Outerwear',
+  'Accessories',
+  'Streetwear',
+];
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  price: number;
-  sizes: string[];
-  images: string[];
-  image?: string;
+interface ProductClientCatalogProps {
+  initialProducts: Product[];
+  categories?: string[];
+  title?: string;
+  subtitle?: string;
+  onOpenCart?: () => void;
+  onToast?: (msg: string) => void;
 }
 
-export function ProductClientCatalog({ initialProducts }: { initialProducts: Product[] }) {
+export function ProductClientCatalog({
+  initialProducts,
+  categories,
+  title,
+  subtitle,
+  onOpenCart,
+  onToast,
+}: ProductClientCatalogProps) {
+  const { favorites, isFavorite } = useCart();
   const [selectedCategory, setSelectedCategory] = useState('All Items');
   const [searchQuery, setSearchQuery] = useState('');
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'featured' | 'low-to-high' | 'high-to-low' | 'newest'>('featured');
 
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+  const catalogCategories = useMemo(() => {
+    if (categories?.length) return ['All Items', ...categories];
+    const dynamic = new Set<string>();
+    (initialProducts || []).forEach((p) => {
+      if (p.category?.trim()) dynamic.add(p.category.trim());
+    });
+    const sorted = Array.from(dynamic).sort((a, b) => a.localeCompare(b));
+    const merged: string[] = ['All Items'];
+    DEFAULT_CATEGORIES.slice(1).forEach((c) => {
+      if (dynamic.has(c)) merged.push(c);
+    });
+    sorted.forEach((c) => {
+      if (!DEFAULT_CATEGORIES.includes(c) && !merged.includes(c)) merged.push(c);
+    });
+    return merged;
+  }, [initialProducts, categories]);
+
+  const filteredProducts = useMemo(() => {
+    let list = Array.isArray(initialProducts) ? [...initialProducts] : [];
+
+    if (selectedCategory !== 'All Items') {
+      list = list.filter(
+        (p) => String(p.category || '').toLowerCase().trim() === selectedCategory.toLowerCase().trim()
+      );
+    }
+
+    if (showFavoritesOnly) {
+      list = list.filter((p) => isFavorite(p.id));
+    }
+
+    const q = searchQuery.toLowerCase().trim();
+    if (q) {
+      list = list.filter(
+        (p) =>
+          String(p.name || '').toLowerCase().includes(q) ||
+          String(p.description || '').toLowerCase().includes(q) ||
+          String(p.category || '').toLowerCase().includes(q)
+      );
+    }
+
+    switch (sortBy) {
+      case 'low-to-high':
+        list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+        break;
+      case 'high-to-low':
+        list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+        break;
+      case 'newest':
+        list.sort((a, b) => {
+          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return tb - ta;
+        });
+        break;
+      case 'featured':
+      default:
+        list.sort((a, b) => {
+          const fa = a.featured ? 1 : 0;
+          const fb = b.featured ? 1 : 0;
+          if (fb !== fa) return fb - fa;
+          return 0;
+        });
+    }
+
+    return list;
+  }, [initialProducts, selectedCategory, searchQuery, sortBy, showFavoritesOnly, isFavorite]);
+
+  const resetAll = () => {
+    setSelectedCategory('All Items');
+    setSearchQuery('');
+    setShowFavoritesOnly(false);
+    setSortBy('featured');
   };
 
-  const filteredProducts = (initialProducts || []).filter((product) => {
-    const matchesCategory =
-      selectedCategory === 'All Items' ||
-      product.category.toLowerCase().trim() === selectedCategory.toLowerCase().trim();
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
-    return matchesCategory && matchesSearch;
-  });
+  const hasActiveFilters =
+    selectedCategory !== 'All Items' ||
+    searchQuery.trim() !== '' ||
+    showFavoritesOnly ||
+    sortBy !== 'featured';
 
   return (
-    <div className="space-y-6">
-      {/* Search & Categories Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Category Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-          {CATEGORIES.map((cat) => (
+    <div className="space-y-6 font-sans">
+      {(title || subtitle) && (
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          {subtitle && (
+            <span className="text-xs font-bold uppercase tracking-widest text-[#9ae600] block">
+              {subtitle}
+            </span>
+          )}
+          {title && (
+            <h2 className="text-2xl sm:text-4xl font-extrabold uppercase tracking-tight text-zinc-900 dark:text-white leading-none">
+              {title}
+            </h2>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none -mx-1 px-1 sm:mx-0 sm:px-0">
+            {catalogCategories.map((cat) => {
+              const active = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer border ${
+                    active
+                      ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white'
+                      : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-transparent hover:border-zinc-300 dark:hover:border-zinc-700'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Action Controls */}
+          <div className="flex items-center gap-2">
+            
+            {/* Favorites Toggle Button */}
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`rounded-full px-5 py-2.5 text-xs font-semibold whitespace-nowrap transition-all ${
-                selectedCategory === cat
-                  ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'bg-white border border-zinc-200/80 text-zinc-600 hover:border-zinc-300'
+              onClick={() => setShowFavoritesOnly((v) => !v)}
+              className={`h-9 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider border transition-colors cursor-pointer ${
+                showFavoritesOnly
+                  ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'
+                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
               }`}
+              aria-pressed={showFavoritesOnly}
             >
-              {cat}
+              <Heart className={`h-3.5 w-3.5 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+              Favoris ({favorites.length})
             </button>
-          ))}
+
+            {/* Search Input */}
+            <div className="relative flex-1 md:flex-none md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="Rechercher un article..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-9 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 py-1.5 pl-8 pr-8 text-xs font-medium text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors"
+              />
+              {searchQuery.trim() && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Sort Select */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="h-9 px-3.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer transition-colors"
+            >
+              <option value="featured">En Vedette</option>
+              <option value="newest">Plus Récent</option>
+              <option value="low-to-high">Prix ↑</option>
+              <option value="high-to-low">Prix ↓</option>
+            </select>
+
+            {/* Filter Drawer Toggle */}
+            <button className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors cursor-pointer" aria-label="More filters">
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search items..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-2xl border border-zinc-200/80 bg-white py-2.5 pl-10 pr-10 text-xs text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 transition-all"
-          />
-          <button className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900">
-            <SlidersHorizontal className="h-4 w-4" />
-          </button>
+        {/* Active Filters Bar */}
+        {hasActiveFilters && (
+          <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40">
+            <div className="flex items-center flex-wrap gap-2">
+              <span className="text-xs font-semibold text-zinc-500">
+                Filtres actifs:
+              </span>
+              {selectedCategory !== 'All Items' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200">
+                  {selectedCategory}
+                </span>
+              )}
+              {showFavoritesOnly && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs font-semibold uppercase text-rose-600 dark:text-rose-400">
+                  Favoris
+                </span>
+              )}
+              {searchQuery.trim() && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200 max-w-xs truncate">
+                  « {searchQuery.trim()} »
+                </span>
+              )}
+              {sortBy !== 'featured' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200">
+                  Tri: {sortBy}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={resetAll}
+              className="text-xs font-semibold underline text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer"
+            >
+              Réinitialiser
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+            {filteredProducts.length} ARTICLE{filteredProducts.length !== 1 ? 'S' : ''} TROUVÉ{filteredProducts.length !== 1 ? 'S' : ''}
+          </p>
         </div>
       </div>
 
-      {/* Header Info */}
-      <div className="flex items-center justify-between pt-2">
-        <h3 className="text-lg font-extrabold text-zinc-900">
-          Exclusive Collection ({filteredProducts.length})
-        </h3>
-      </div>
-
-      {/* Product Grid */}
+      {/* Empty State vs Product Grid */}
       {filteredProducts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-200 bg-zinc-50/50 py-16 text-center">
-          <p className="text-xs font-mono font-bold uppercase text-zinc-500">
-            No catalog items match your selected filters.
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/30 py-20 text-center space-y-3 px-4">
+          <Search className="h-8 w-8 text-zinc-400" />
+          <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            Aucun article ne correspond à vos filtres.
           </p>
           <button
-            onClick={() => {
-              setSelectedCategory('All Items');
-              setSearchQuery('');
-            }}
-            className="mt-3 text-xs font-black uppercase underline text-zinc-900"
+            onClick={resetAll}
+            className="mt-1 text-xs font-semibold underline text-zinc-900 dark:text-white cursor-pointer"
           >
-            Reset Catalog Filters
+            Réinitialiser les filtres
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => {
-            const isFav = favorites.includes(product.id);
-            const displayImage =
-              (Array.isArray(product.images) && product.images[0]) ||
-              product.image ||
-              'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop';
-
-            return (
-              <div
-                key={product.id}
-                className="group relative flex flex-col rounded-3xl border border-zinc-200/70 bg-white p-3 shadow-sm hover:shadow-md transition-all duration-300"
-              >
-                {/* Image & Favorite Button */}
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-zinc-100">
-                  {/* eslint-disable-next-html-element-for-img */}
-                  <img
-                    src={displayImage}
-                    alt={product.name}
-                    className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <button
-                    onClick={() => toggleFavorite(product.id)}
-                    className="absolute right-3 top-3 rounded-full bg-white/90 p-2.5 text-zinc-600 shadow-sm backdrop-blur-md hover:text-rose-500 transition-colors"
-                    aria-label="Favorite"
-                  >
-                    <Heart className={`h-4 w-4 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
-                  </button>
-                </div>
-
-                {/* Product Details */}
-                <div className="mt-3 flex flex-col flex-1 justify-between space-y-2 p-1">
-                  <div>
-                    <h4 className="text-sm font-bold text-zinc-900 line-clamp-1">
-                      {product.name}
-                    </h4>
-                    <p className="text-[11px] font-medium text-zinc-400 mt-0.5">
-                      {product.category}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-sm font-extrabold text-zinc-900">
-                      {product.price.toFixed(2)}{' '}
-                      <span className="text-[10px] text-zinc-400 font-normal">MAD</span>
-                    </span>
-
-                    <div className="flex items-center gap-1">
-                      <span className="h-2.5 w-2.5 rounded-full bg-zinc-900 inline-block"></span>
-                      <span className="h-2.5 w-2.5 rounded-full bg-stone-400 inline-block"></span>
-                      <span className="h-2.5 w-2.5 rounded-full bg-amber-700 inline-block"></span>
-                    </div>
-                  </div>
-
-                  <Link
-                    href={`/products/${product.id}`}
-                    className="w-full mt-2 flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-zinc-800 transition-all active:scale-95"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onOpenCart={onOpenCart}
+              onToast={onToast}
+            />
+          ))}
         </div>
       )}
     </div>

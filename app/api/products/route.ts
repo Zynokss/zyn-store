@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyAdminSession } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -43,8 +44,21 @@ export async function OPTIONS() {
   return NextResponse.json({}, { status: 200 });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const productId = searchParams.get('id');
+
+    if (productId) {
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+      });
+      if (!product) {
+        return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, product: formatProduct(product) });
+    }
+
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
     });
@@ -59,18 +73,23 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const admin = await verifyAdminSession(req);
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Admin authentication required' }, { status: 401 });
+    }
+
     const body = await req.json();
 
     if (!body.name) {
       return NextResponse.json({ success: false, error: 'Product name is required.' }, { status: 400 });
     }
 
-    const name = String(body.name);
-    const category = String(body.category || 'Streetwear');
-    const price = Number(body.price) || 0;
-    const description = String(body.description || name);
+    const name = String(body.name).trim();
+    const category = String(body.category || 'Streetwear').trim();
+    const price = Math.max(0, Number(body.price) || 0);
+    const description = String(body.description || name).trim();
     const primaryImage =
       body.image ||
       (Array.isArray(body.images) && body.images.length > 0 ? body.images[0] : '') ||
@@ -107,8 +126,13 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(req: NextRequest) {
   try {
+    const admin = await verifyAdminSession(req);
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Admin authentication required' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { id, ...updateData } = body;
 
@@ -116,25 +140,23 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: false, error: 'Product ID is required' }, { status: 400 });
     }
 
-    // Format & clean price
-    if (updateData.price) updateData.price = Number(updateData.price);
+    if (updateData.price !== undefined) updateData.price = Math.max(0, Number(updateData.price) || 0);
+    if (updateData.name) updateData.name = String(updateData.name).trim();
+    if (updateData.category) updateData.category = String(updateData.category).trim();
+    if (updateData.description) updateData.description = String(updateData.description).trim();
 
-    // Format & clean stock status
     if (typeof updateData.inStock === 'undefined' && updateData.stockStatus) {
       updateData.inStock = updateData.stockStatus === 'In Stock';
     }
 
-    // Process image updates
     if (updateData.image && (!updateData.images || updateData.images.length === 0)) {
       updateData.images = [updateData.image];
     }
 
-    // Ensure colors are sanitized properly
     if (Array.isArray(updateData.colors)) {
       updateData.colors = updateData.colors.map((c: unknown) => String(c).trim()).filter(Boolean);
     }
 
-    // Remove non-Prisma metadata fields
     delete updateData.slug;
     delete updateData.image;
     delete updateData.stockStatus;
@@ -153,8 +175,13 @@ export async function PUT(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
+    const admin = await verifyAdminSession(req);
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Admin authentication required' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
@@ -163,8 +190,7 @@ export async function DELETE(req: Request) {
     const targetId = String(id);
 
     await prisma.$transaction(async (tx) => {
-      if ('orderItem' in tx) await (tx as any).orderItem.deleteMany({ where: { productId: targetId } });
-      if ('cartItem' in tx) await (tx as any).cartItem.deleteMany({ where: { productId: targetId } });
+      await tx.orderItem.deleteMany({ where: { productId: targetId } });
       await tx.product.delete({ where: { id: targetId } });
     });
 

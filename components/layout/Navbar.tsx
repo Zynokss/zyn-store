@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
-import { ShoppingBag, Search, Heart, User, LogOut, Globe, Sun, Moon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { SignedIn, SignedOut } from '@neondatabase/neon-js/auth/react/ui';
+import { ShoppingBag, Search, Heart, User, Globe, Sun, Moon, ChevronDown, Check, Package, Settings, LogOut } from 'lucide-react';
 import { useTranslation } from '@/components/providers/IntlProvider';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/providers/ThemeProvider';
+import { useCart } from '@/lib/CartContext';
+import { neon } from '@/lib/neon';
 
 interface NavbarProps {
-  favoriteCount?: number;
-  cartCount?: number;
   onOpenCart?: () => void;
   onOpenSearch?: () => void;
   onToggleFavoritesFilter?: () => void;
@@ -17,168 +18,285 @@ interface NavbarProps {
 }
 
 export function Navbar({
-  favoriteCount = 0,
-  cartCount = 0,
   onOpenCart,
   onOpenSearch,
   onToggleFavoritesFilter,
   isFavoritesFilterActive = false,
 }: NavbarProps) {
-  const { data: session } = useSession();
-  const { language, locale, setLanguage, setLocale, t } = useTranslation();
+  const router = useRouter();
+  const { locale, setLocale, t } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const { totalItems, favoriteCount } = useCart();
   const [mounted, setMounted] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Active language getter (supports both 'locale' and 'language' props)
-  const currentLang = locale || language || 'en';
-  const changeLanguage = setLocale || setLanguage;
+  const useSession = (neon.auth as any).useSession as () => {
+    data?: { user?: { name?: string; email?: string } };
+  };
+  const { data: sessionData } = useSession?.() || {};
+
+  const LANGS = [
+    { code: 'en', label: 'English', short: 'EN' },
+    { code: 'fr', label: 'Français', short: 'FR' },
+    { code: 'ar', label: 'العربية', short: 'AR' },
+  ] as const;
+  const currentLang = LANGS.find((l) => l.code === locale) || LANGS[0];
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
   }, []);
 
+  const cartBadge = mounted ? totalItems : 0;
+  const favBadge = mounted ? favoriteCount : 0;
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md transition-colors duration-200">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-1 text-xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase">
-          ZYN<span className="text-[#ccff00] bg-black dark:bg-zinc-900 px-1.5 py-0.5 rounded text-sm border border-black dark:border-zinc-800">STORE</span>
-        </Link>
+    <header className="sticky top-0 z-50 w-full font-sans transition-colors duration-200">
+      {/* Top Announcement Bar */}
+      <div className="bg-zinc-950 text-white text-[11px] font-sans font-medium py-2 px-4 text-center tracking-wider border-b border-zinc-800 flex items-center justify-between sm:justify-center gap-4">
+        <span>Get 20% off when you subscribe to regular updates with code: <strong className="text-[#9ae600] font-bold">ZYN20</strong></span>
+        <div className="hidden md:flex items-center gap-3 text-[10px] text-zinc-400 uppercase tracking-widest">
+          <span>City Studio</span>
+          <span>•</span>
+          <span>Express Delivery</span>
+        </div>
+      </div>
 
-        {/* Functional Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-          <Link href="/#catalog" className="hover:text-black dark:hover:text-[#ccff00] transition-colors">
-            {t('Navbar.catalog') !== 'Navbar.catalog' ? t('Navbar.catalog') : t('catalog')}
-          </Link>
-          <Link href="/#catalog" className="hover:text-black dark:hover:text-[#ccff00] transition-colors flex items-center gap-1">
-            <span>New Arrivals</span>
-            <span className="bg-[#ccff00] text-black text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">HOT</span>
-          </Link>
-          <Link href="/track-order" className="hover:text-black dark:hover:text-[#ccff00] transition-colors">
-            {t('Navbar.trackOrder') !== 'Navbar.trackOrder' ? t('Navbar.trackOrder') : t('trackOrder')}
-          </Link>
-        </nav>
+      {/* Main Navigation Bar */}
+      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
+          
+          {/* Brand Logo & Main Nav Links */}
+          <div className="flex items-center gap-8">
+            <Link 
+              href="/" 
+              className="text-2xl sm:text-3xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase transition-opacity hover:opacity-80"
+            >
+              ZYN<span className="text-[#9ae600]">.</span>
+            </Link>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Light / Dark Mode Toggle */}
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="rounded-full p-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-              title="Toggle Theme"
-              type="button"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4 text-[#ccff00]" />
-              ) : (
-                <Moon className="h-4 w-4 text-zinc-800" />
-              )}
-            </button>
-          )}
+            <nav className="hidden md:flex items-center gap-6 text-xs font-sans font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+              <Link href="/#catalog" className="hover:text-zinc-900 dark:hover:text-white transition-colors py-1">
+                {t('catalog')}
+              </Link>
+              <Link href="/#catalog" className="hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1.5 py-1">
+                <span>{t('newDrop')}</span>
+                <span className="bg-[#9ae600] text-black text-[9px] px-1.5 py-0.5 font-bold leading-none">
+                  NEW
+                </span>
+              </Link>
+              <Link href="/track-order" className="hover:text-zinc-900 dark:hover:text-white transition-colors py-1">
+                {t('trackOrder')}
+              </Link>
+              <Link href="/contact" className="hover:text-zinc-900 dark:hover:text-white transition-colors py-1">
+                {t('contact')}
+              </Link>
+            </nav>
+          </div>
 
-          {/* Language Switcher Selector */}
-          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 rounded-full px-2 py-1 text-[10px] font-mono font-bold border border-zinc-200 dark:border-zinc-800">
-            <Globe className="h-3.5 w-3.5 text-zinc-500" />
+          {/* Search Bar (ASOS-Style Pill) */}
+          <div className="hidden sm:flex flex-1 max-w-md mx-4">
             <button
-              onClick={() => changeLanguage('en')}
-              className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
-                currentLang === 'en' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
-              }`}
-              type="button"
+              onClick={onOpenSearch}
+              className="w-full flex items-center justify-between bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full py-2 px-4 text-xs text-zinc-500 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors cursor-pointer"
             >
-              EN
-            </button>
-            <button
-              onClick={() => changeLanguage('fr')}
-              className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
-                currentLang === 'fr' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
-              }`}
-              type="button"
-            >
-              FR
-            </button>
-            <button
-              onClick={() => changeLanguage('ar')}
-              className={`px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
-                currentLang === 'ar' ? 'bg-black dark:bg-[#ccff00] text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
-              }`}
-              type="button"
-            >
-              عربي
+              <span className="truncate">Search for garments, drops and styles...</span>
+              <Search className="h-4 w-4 text-zinc-400 shrink-0" />
             </button>
           </div>
 
-          {/* Search Toggle */}
-          <button
-            onClick={onOpenSearch}
-            className="rounded-full p-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white transition-all cursor-pointer"
-            title="Search"
-            type="button"
-          >
-            <Search className="h-5 w-5" />
-          </button>
+          {/* Right Action Icons */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            
+            {/* Mobile Search Button */}
+            <button
+              onClick={onOpenSearch}
+              className="sm:hidden p-2 text-zinc-800 dark:text-zinc-200 hover:text-black dark:hover:text-white cursor-pointer"
+              type="button"
+              aria-label="Open search"
+            >
+              <Search className="h-5 w-5" />
+            </button>
 
-          {/* Wishlist Filter Toggle */}
-          <button
-            onClick={onToggleFavoritesFilter}
-            className={`relative rounded-full p-2 transition-all cursor-pointer ${
-              isFavoritesFilterActive 
-                ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600' 
-                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            }`}
-            title="Filter Favorites"
-            type="button"
-          >
-            <Heart className={`h-5 w-5 ${favoriteCount > 0 ? 'fill-rose-500 text-rose-500' : ''}`} />
-            {favoriteCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-mono font-bold text-white">
-                {favoriteCount}
-              </span>
-            )}
-          </button>
-
-          {/* Cart Drawer Toggle */}
-          <button
-            onClick={onOpenCart}
-            className="relative rounded-full bg-black dark:bg-[#ccff00] p-2.5 text-white dark:text-black hover:bg-[#ccff00] dark:hover:bg-lime-400 hover:text-black transition-all cursor-pointer"
-            title="Open Cart"
-            type="button"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#ccff00] dark:bg-black text-[9px] font-mono font-bold text-black dark:text-[#ccff00] border border-black dark:border-zinc-800">
-              {cartCount}
-            </span>
-          </button>
-
-          {/* Authentication & User Account Actions */}
-          {session ? (
-            <div className="flex items-center gap-2 pl-2 border-l border-zinc-200 dark:border-zinc-800">
-              <Link
-                href="/account"
-                className="text-xs font-mono font-bold uppercase text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white max-w-[100px] truncate"
-                title={session.user?.email || 'Account'}
-              >
-                {session.user?.name || session.user?.email?.split('@')[0] || 'Account'}
-              </Link>
+            {/* Theme Toggle */}
+            {mounted && (
               <button
-                onClick={() => signOut()}
-                className="rounded-full p-2 text-zinc-500 hover:text-rose-500 transition-colors cursor-pointer"
-                title="Sign Out"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2 text-zinc-800 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                title="Toggle Theme"
                 type="button"
               >
-                <LogOut className="h-4 w-4" />
+                {theme === 'dark' ? <Sun className="h-5 w-5 text-[#9ae600]" /> : <Moon className="h-5 w-5" />}
               </button>
+            )}
+
+            {/* Language Switcher */}
+            <div className="hidden md:flex items-center relative" ref={langRef}>
+              <button
+                onClick={() => setLangOpen((v) => !v)}
+                className="flex items-center gap-1 p-2 text-zinc-800 dark:text-zinc-200 hover:text-black dark:hover:text-white cursor-pointer text-xs font-semibold uppercase"
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={langOpen}
+                aria-label="Change language"
+              >
+                <Globe className="h-4 w-4" />
+                <span>{currentLang.short}</span>
+                <ChevronDown className={`h-3 w-3 transition-transform ${langOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {langOpen && (
+                <div
+                  role="listbox"
+                  className="absolute right-0 top-full mt-2 w-36 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-xl z-[60]"
+                >
+                  {LANGS.map((l) => {
+                    const active = locale === l.code;
+                    return (
+                      <button
+                        key={l.code}
+                        type="button"
+                        onClick={() => {
+                          setLocale(l.code);
+                          setLangOpen(false);
+                        }}
+                        role="option"
+                        aria-selected={active}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors cursor-pointer ${
+                          active
+                            ? 'bg-zinc-100 dark:bg-zinc-900 font-bold text-zinc-900 dark:text-white'
+                            : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900'
+                        }`}
+                      >
+                        <span>{l.label}</span>
+                        {active && <Check className="h-3.5 w-3.5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-full p-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
-              title="Sign In"
+
+            {/* Favorites Button */}
+            <button
+              onClick={onToggleFavoritesFilter}
+              className={`relative p-2 text-zinc-800 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-colors cursor-pointer ${
+                isFavoritesFilterActive ? 'text-rose-600 dark:text-rose-500' : ''
+              }`}
+              type="button"
+              aria-label="Toggle favorites"
             >
-              <User className="h-5 w-5" />
-            </Link>
-          )}
+              <Heart className={`h-5 w-5 ${favBadge > 0 || isFavoritesFilterActive ? 'fill-current' : ''}`} />
+              {favBadge > 0 && (
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-[#9ae600] text-black text-[9px] font-bold rounded-full">
+                  {favBadge}
+                </span>
+              )}
+            </button>
+
+            {/* Cart Button */}
+            <button
+              onClick={onOpenCart}
+              className="relative p-2 text-zinc-800 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+              type="button"
+              aria-label="Open cart"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {cartBadge > 0 && (
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-[#9ae600] text-black text-[9px] font-bold rounded-full">
+                  {cartBadge > 99 ? '99+' : cartBadge}
+                </span>
+              )}
+            </button>
+
+            {/* Account Menu */}
+            <SignedIn>
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  type="button"
+                  className="p-2 text-zinc-800 dark:text-zinc-200 hover:text-black dark:hover:text-white cursor-pointer"
+                >
+                  <User className="h-5 w-5" />
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-52 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-xl z-[70]">
+                    <div className="p-3 border-b border-zinc-100 dark:border-zinc-900">
+                      <p className="text-xs font-bold text-zinc-900 dark:text-white truncate">
+                        {sessionData?.user?.name || 'Account'}
+                      </p>
+                      <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                        {sessionData?.user?.email || ''}
+                      </p>
+                    </div>
+
+                    <div className="py-1 text-xs">
+                      <Link
+                        href="/account"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      >
+                        <Package className="h-4 w-4 text-zinc-400" />
+                        <span>My Orders</span>
+                      </Link>
+
+                      <Link
+                        href="/account/settings"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      >
+                        <Settings className="h-4 w-4 text-zinc-400" />
+                        <span>Settings</span>
+                      </Link>
+
+                      <button
+                        onClick={async () => {
+                          setUserMenuOpen(false);
+                          try {
+                            await (neon.auth as any).signOut?.({});
+                          } catch {}
+                          if (typeof window !== 'undefined') {
+                            window.location.href = '/';
+                          }
+                        }}
+                        type="button"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left border-t border-zinc-100 dark:border-zinc-900 mt-1"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </SignedIn>
+
+            <SignedOut>
+              <Link
+                href="/auth/sign-in"
+                className="p-2 text-zinc-800 dark:text-zinc-200 hover:text-black dark:hover:text-white cursor-pointer"
+                aria-label={t('signIn') || 'Sign in'}
+              >
+                <User className="h-5 w-5" />
+              </Link>
+            </SignedOut>
+          </div>
         </div>
       </div>
     </header>

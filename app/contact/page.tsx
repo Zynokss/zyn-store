@@ -21,7 +21,8 @@ export default function ContactPage() {
     setLoading(true);
     setError('');
 
-    try {      const res = await fetch('/api/contact', {
+    try {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -42,41 +43,48 @@ export default function ContactPage() {
 
   return (
     <StoreLayout>
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16 w-full space-y-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16 w-full space-y-10 font-sans antialiased">
+        
+        {/* Back Link */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase text-zinc-500 hover:text-black dark:hover:text-[#ccff00] transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Store
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to Store
         </Link>
 
+        {/* Page Header */}
         <div className="text-center space-y-3 max-w-xl mx-auto">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-500 dark:text-[#ccff00]">
-            &#47;&#47; CUSTOMER SUPPORT
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#9ae600] block">
+            Customer Support
           </span>
-          <h1 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-zinc-900 dark:text-white">
-            GET IN TOUCH
+          <h1 className="text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-zinc-900 dark:text-white">
+            Get In Touch
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-normal leading-relaxed">
             Have questions about your order, shipping policies, or sizing? Our support team responds within 24 hours.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Quick Direct Info Cards */}
+          
+          {/* Quick Direct Contact & Policy Info */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-white space-y-4 shadow-xl">
-              <h3 className="text-xs font-mono font-bold text-[#ccff00] uppercase">&#47;&#47; DIRECT CONTACT</h3>
-              <div className="space-y-4 text-xs font-mono">
+            
+            {/* Direct Contact Card */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-white space-y-5 shadow-lg">
+              <span className="text-xs font-bold text-[#9ae600] uppercase tracking-wider block">Direct Contact</span>
+              
+              <div className="space-y-4 text-xs font-medium">
                 <div className="flex items-start gap-3">
-                  <MessageSquare className="h-5 w-5 text-[#ccff00] flex-shrink-0 mt-0.5" />
+                  <MessageSquare className="h-5 w-5 text-[#9ae600] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-zinc-500 text-[10px] uppercase block">WhatsApp Support</span>
+                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">WhatsApp Support</span>
                     <a
                       href="https://wa.me/212671396595"
                       target="_blank"
                       rel="noreferrer"
-                      className="font-bold text-white hover:text-[#ccff00] transition-colors"
+                      className="font-bold text-white hover:text-[#9ae600] transition-colors text-sm"
                     >
                       +212 6 71 39 65 95
                     </a>
@@ -84,12 +92,12 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-[#ccff00] flex-shrink-0 mt-0.5" />
+                  <Mail className="h-5 w-5 text-[#9ae600] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-zinc-500 text-[10px] uppercase block">Email Address</span>
+                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">Email Address</span>
                     <a
                       href="mailto:support@zyn.store"
-                      className="font-bold text-white hover:text-[#ccff00] transition-colors"
+                      className="font-bold text-white hover:text-[#9ae600] transition-colors"
                     >
                       support@zyn.store
                     </a>
@@ -97,9 +105,9 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 text-[#ccff00] flex-shrink-0 mt-0.5" />
+                  <Clock className="h-5 w-5 text-[#9ae600] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-zinc-500 text-[10px] uppercase block">Working Hours</span>
+                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">Working Hours</span>
                     <span className="font-bold text-white">Mon - Sat (09:00 - 19:00 GMT+1)</span>
                   </div>
                 </div>
@@ -107,21 +115,21 @@ export default function ContactPage() {
             </div>
 
             {/* Policy Summary Card */}
-            <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 space-y-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              <h4 className="font-bold uppercase text-zinc-900 dark:text-white">Shipping &amp; Return Policies</h4>
-              <p className="leading-relaxed text-[11px]">
+            <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 space-y-2 text-xs font-normal text-zinc-600 dark:text-zinc-400">
+              <h4 className="font-bold uppercase text-zinc-900 dark:text-white tracking-wider">Shipping &amp; Return Policies</h4>
+              <p className="leading-relaxed">
                 Orders ship nationwide via <strong>Amana Colis Postaux</strong> (24-48 hours delivery). Returns are accepted within 7 days of delivery for unworn items with tags attached.
               </p>
             </div>
           </div>
 
           {/* Main Contact Form */}
-          <div className="lg:col-span-7 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <div className="lg:col-span-7 bg-white dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-sm">
             {submitted ? (
               <div className="text-center py-12 space-y-4">
-                <CheckCircle2 className="h-12 w-12 text-emerald-500 dark:text-[#ccff00] mx-auto" />
-                <h3 className="text-xl font-black uppercase text-zinc-900 dark:text-white">Message Delivered!</h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium max-w-sm mx-auto">
+                <CheckCircle2 className="h-12 w-12 text-[#9ae600] mx-auto" />
+                <h3 className="text-xl font-extrabold uppercase text-zinc-900 dark:text-white">Message Delivered!</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-normal max-w-sm mx-auto leading-relaxed">
                   Thank you for reaching out. We have logged your request and will send a reply to <strong>{formData.email}</strong>.
                 </p>
                 <button
@@ -129,26 +137,26 @@ export default function ContactPage() {
                     setSubmitted(false);
                     setFormData({ name: '', email: '', subject: 'Order Status Inquiry', message: '' });
                   }}
-                  className="mt-4 text-xs font-black uppercase text-black dark:text-[#ccff00] underline cursor-pointer"
+                  className="mt-4 text-xs font-bold uppercase text-zinc-900 dark:text-[#9ae600] underline cursor-pointer hover:no-underline transition-all"
                 >
                   Send another message
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-[#ccff00]">
-                  &#47;&#47; SEND A MESSAGE
-                </h3>
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
+                  Send A Message
+                </span>
 
                 {error && (
-                  <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-2xl">
+                  <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-2xl">
                     {error}
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">
+                    <label className="text-xs font-bold uppercase text-zinc-500 mb-1.5 block">
                       Full Name *
                     </label>
                     <input
@@ -157,12 +165,12 @@ export default function ContactPage() {
                       placeholder="Your Name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3.5 text-xs font-bold text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-black dark:focus:border-[#ccff00] focus:outline-none transition-all"
+                      className="w-full rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-4 py-3 text-xs font-medium text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">
+                    <label className="text-xs font-bold uppercase text-zinc-500 mb-1.5 block">
                       Email Address *
                     </label>
                     <input
@@ -171,19 +179,19 @@ export default function ContactPage() {
                       placeholder="your@email.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3.5 text-xs font-bold text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-black dark:focus:border-[#ccff00] focus:outline-none transition-all"
+                      className="w-full rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-4 py-3 text-xs font-medium text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">
+                  <label className="text-xs font-bold uppercase text-zinc-500 mb-1.5 block">
                     Subject
                   </label>
                   <select
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3.5 text-xs font-bold text-zinc-900 dark:text-white focus:border-black dark:focus:border-[#ccff00] focus:outline-none transition-all cursor-pointer"
+                    className="w-full rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-4 py-3 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors cursor-pointer"
                   >
                     <option value="Order Status Inquiry">Order Status Inquiry</option>
                     <option value="Amana Tracking Issue">Amana Tracking Issue</option>
@@ -194,7 +202,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1 block">
+                  <label className="text-xs font-bold uppercase text-zinc-500 mb-1.5 block">
                     Your Message *
                   </label>
                   <textarea
@@ -203,14 +211,14 @@ export default function ContactPage() {
                     placeholder="Describe your inquiry or include your order reference number..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3.5 text-xs font-medium text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-black dark:focus:border-[#ccff00] focus:outline-none transition-all"
+                    className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-4 text-xs font-normal text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 rounded-2xl bg-black dark:bg-[#ccff00] py-4 text-xs font-black uppercase text-white dark:text-black hover:bg-[#ccff00] hover:text-black dark:hover:bg-lime-400 transition-all cursor-pointer shadow-lg active:scale-95 disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 rounded-full bg-zinc-900 text-white hover:bg-[#9ae600] hover:text-black dark:bg-white dark:text-zinc-900 dark:hover:bg-[#9ae600] dark:hover:text-black py-4 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send Message
                 </button>

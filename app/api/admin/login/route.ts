@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+
+const ADMIN_SESSION_KEY = 'zyn_admin_session';
 
 export async function POST(req: Request) {
   try {
@@ -14,21 +17,45 @@ export async function POST(req: Request) {
 
     const formattedEmail = String(email).toLowerCase().trim();
 
-    // Query using exact match on lowercased input or standard raw fallback
-    const admin = await (prisma as any).adminUser.findFirst({
+    const admin = await prisma.adminUser.findFirst({
       where: {
         email: formattedEmail,
       },
     });
 
-    if (!admin || admin.password !== password) {
+    if (!admin) {
       return NextResponse.json(
         { success: false, error: 'Invalid admin credentials.' },
         { status: 401 }
       );
     }
 
-    return NextResponse.json({
+    let passwordValid = false;
+    try {
+      passwordValid = await bcrypt.compare(password, admin.password);
+    } catch {
+      if (admin.password === password) {
+        passwordValid = true;
+        const hashed = await bcrypt.hash(password, 10);
+        await prisma.adminUser.update({
+          where: { id: admin.id },
+          data: { password: hashed },
+        });
+      }
+    }
+
+    if (!passwordValid) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid admin credentials.' },
+        { status: 401 }
+      );
+    }
+
+    const sessionToken = Buffer.from(
+      `${admin.id}:${Date.now()}:${crypto.randomUUID()}`
+    ).toString('base64');
+
+    const response = NextResponse.json({
       success: true,
       admin: {
         id: admin.id,
@@ -36,9 +63,20 @@ export async function POST(req: Request) {
         email: admin.email,
         role: admin.role || 'ADMIN',
       },
+      sessionToken,
     });
+
+    response.cookies.set(ADMIN_SESSION_KEY, sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 8,
+    });
+
+    return response;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Admin login error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
