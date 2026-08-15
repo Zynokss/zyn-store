@@ -577,23 +577,29 @@ const translations: Record<Language, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en');
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('zyn_lang') as Language;
-    if (savedLang && ['en', 'fr', 'ar'].includes(savedLang)) {
-      setLanguageState(savedLang);
-      document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
-      document.documentElement.lang = savedLang;
+  // Read local storage lazily on mount to avoid calling setState inside useEffect
+  const [language, setLanguageState] = useState<Language>(() => {
+    if (typeof window !== 'undefined') {
+      const savedLang = localStorage.getItem('zyn_lang') as Language;
+      if (savedLang && ['en', 'fr', 'ar'].includes(savedLang)) {
+        return savedLang;
+      }
     }
-  }, []);
+    return 'en';
+  });
+
+  // Synchronize document attributes with language state
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.lang = language;
+    }
+  }, [language]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('zyn_lang', lang);
-    if (typeof document !== 'undefined') {
-      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-      document.documentElement.lang = lang;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('zyn_lang', lang);
     }
   };
 

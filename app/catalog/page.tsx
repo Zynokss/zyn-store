@@ -14,6 +14,19 @@ import { Product as CatalogProduct } from '@/lib/types';
 
 const ITEMS_PER_PAGE = 12;
 
+interface ProductColorObject {
+  name?: string;
+  hex?: string;
+}
+
+type ProductColor = string | ProductColorObject;
+
+type CatalogProductExt = CatalogProduct & {
+  sizes?: string[];
+  brand?: string;
+  colors?: ProductColor[];
+};
+
 // Standard Color Name to Hex Map
 const COLOR_HEX_MAP: Record<string, string> = {
   black: '#000000',
@@ -178,7 +191,7 @@ function CatalogGridContent() {
   const availableSizes = useMemo(() => {
     const sizeMap: Record<string, number> = {};
     products.forEach((p) => {
-      const item = p as Record<string, any>;
+      const item = p as CatalogProductExt;
       if (Array.isArray(item.sizes)) {
         item.sizes.forEach((s: string) => {
           sizeMap[s] = (sizeMap[s] || 0) + 1;
@@ -191,7 +204,7 @@ function CatalogGridContent() {
   const availableBrands = useMemo(() => {
     const brandMap: Record<string, number> = {};
     products.forEach((p) => {
-      const item = p as Record<string, any>;
+      const item = p as CatalogProductExt;
       const brand = item.brand ? String(item.brand).trim() : 'ZYN';
       brandMap[brand] = (brandMap[brand] || 0) + 1;
     });
@@ -201,10 +214,10 @@ function CatalogGridContent() {
   const availableColours = useMemo(() => {
     const colourMap: Record<string, { count: number; hex?: string }> = {};
     products.forEach((p) => {
-      const item = p as Record<string, any>;
+      const item = p as CatalogProductExt;
       if (Array.isArray(item.colors)) {
-        item.colors.forEach((c: any) => {
-          const colorName = typeof c === 'string' ? c : c && typeof c === 'object' ? c.name : '';
+        item.colors.forEach((c: ProductColor) => {
+          const colorName = typeof c === 'string' ? c : c && typeof c === 'object' ? c.name || '' : '';
           const hex = typeof c === 'object' && c !== null ? c.hex : undefined;
           if (colorName) {
             if (!colourMap[colorName]) {
@@ -240,7 +253,7 @@ function CatalogGridContent() {
 
     return products
       .filter((product) => {
-        const item = product as Record<string, any>;
+        const item = product as CatalogProductExt;
         const pCategory = item.category ? String(item.category).toLowerCase().trim() : '';
         const pName = item.name ? String(item.name).toLowerCase() : '';
         const pBrand = item.brand ? String(item.brand).toLowerCase().trim() : 'zyn';
@@ -260,8 +273,8 @@ function CatalogGridContent() {
         const matchesColour =
           selectedColours.length === 0 ||
           (Array.isArray(item.colors) &&
-            item.colors.some((c: any) => {
-              const cName = typeof c === 'string' ? c : c && typeof c === 'object' ? c.name : '';
+            item.colors.some((c: ProductColor) => {
+              const cName = typeof c === 'string' ? c : c && typeof c === 'object' ? c.name || '' : '';
               return selectedColours.includes(cName);
             }));
 
