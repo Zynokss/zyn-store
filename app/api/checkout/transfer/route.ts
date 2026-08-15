@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = String(formData.email).toLowerCase().trim();
-    const user = await verifyUserSession(req);
+    const user = await verifyUserSession();
     let activeUserId = user?.id || body.activeUserId || null;
 
     if (!activeUserId) {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingBag, Check, Heart, Eye } from 'lucide-react';
 import { Product } from '@/lib/types';
@@ -62,11 +63,13 @@ export function ProductCard({
       {/* Image Frame */}
       <div className="relative aspect-[3/4] w-full bg-zinc-100 dark:bg-zinc-950 overflow-hidden">
         <Link href={`/products/${product.id}`} className="block h-full w-full">
-          {/* eslint-disable-next-html-element-for-img */}
-          <img
+          <Image
             src={displayImage}
             alt={product.name}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             loading="lazy"
+            unoptimized
             onError={() => setImgError(true)}
             className="absolute inset-0 h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
           />

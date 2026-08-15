@@ -33,7 +33,7 @@ export function Footer() {
       } else {
         setStatus({ type: 'error', msg: data.error || 'Failed to subscribe.' });
       }
-    } catch (err) {
+    } catch {
       setStatus({ type: 'error', msg: 'Error submitting email.' });
     } finally {
       setLoading(false);

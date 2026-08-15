@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Loader2, ChevronLeft, ChevronRight, Sparkles, Truck, ShieldCheck, Zap, ArrowUpRight } from 'lucide-react';

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowLeft, Building2, CheckCircle2,
   Copy, Check, Loader2, Truck, AlertTriangle, Eye, EyeOff
@@ -51,10 +52,11 @@ export default function CheckoutPage() {
   const [activeStep, setActiveStep] = useState<number>(1);
   const [maxCompletedStep, setMaxCompletedStep] = useState<number>(1);
   const [showPassword, setShowPassword] = useState(false);
+  
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
+    firstName: session?.user?.name?.split(' ')[0] || '',
+    lastName: session?.user?.name?.split(' ').slice(1).join(' ') || '',
+    email: session?.user?.email || '',
     phone: '',
     password: '',
     address1: '',
@@ -73,17 +75,6 @@ export default function CheckoutPage() {
     const id = setTimeout(() => setLoading(false), 100);
     return () => clearTimeout(id);
   }, []);
-
-  useEffect(() => {
-    if (session?.user?.email) {
-      setFormData((prev) => ({
-        ...prev,
-        email: session.user?.email || '',
-        firstName: session.user?.name?.split(' ')[0] || prev.firstName,
-        lastName: session.user?.name?.split(' ').slice(1).join(' ') || prev.lastName,
-      }));
-    }
-  }, [session]);
 
   const handleCopyRIB = (rib: string) => {
     navigator.clipboard.writeText(rib.replace(/\s+/g, ''));
@@ -622,8 +613,14 @@ export default function CheckoutPage() {
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {cart.map((item) => (
                 <div key={`${item.id}-${item.selectedSize || 's'}-${item.selectedColor || 'c'}`} className="flex items-center gap-3">
-                  {/* eslint-disable-next-html-element-for-img */}
-                  <img src={item.image} alt={item.name} className="h-12 w-10 object-cover rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800" />
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    width={40}
+                    height={48}
+                    unoptimized
+                    className="h-12 w-10 object-cover rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
+                  />
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold uppercase text-zinc-900 dark:text-white truncate">{item.name}</h4>
                     <p className="text-[10px] text-zinc-500 font-medium">

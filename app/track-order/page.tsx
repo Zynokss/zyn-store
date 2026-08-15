@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Search, Package, Clock, CheckCircle2, Truck, AlertCircle, Loader2, XCircle } from 'lucide-react';
 import { StoreLayout } from '@/components/layout/StoreLayout';
 
@@ -159,10 +160,12 @@ export default function TrackOrderPage() {
                     <div className="space-y-3">
                       {order.items.map((item) => (
                         <div key={item.id} className="flex items-center gap-3">
-                          {/* eslint-disable-next-html-element-for-img */}
-                          <img
+                          <Image
                             src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop'}
                             alt={item.product?.name || 'Product Image'}
+                            width={40}
+                            height={48}
+                            unoptimized
                             className="h-12 w-10 object-cover rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
                           />
                           <div className="flex-1">

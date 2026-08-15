@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, ShoppingBag, Heart, Check, Loader2, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -171,12 +172,12 @@ export default function ProductDetailPage() {
           {/* Left Column: Image Gallery */}
           <div className="space-y-4 lg:sticky lg:top-24">
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm group">
-              {/* eslint-disable-next-html-element-for-img */}
-              <img
+              <Image
                 src={mainImage}
                 alt={product.name}
-                draggable={false}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = DEFAULT_IMAGE; }}
+                fill
+                priority
+                unoptimized
                 className="absolute inset-0 h-full w-full object-cover object-center transition-all duration-700 ease-out group-hover:scale-[1.03]"
               />
 
@@ -230,13 +231,11 @@ export default function ProductDetailPage() {
                         : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
-                    {/* eslint-disable-next-html-element-for-img */}
-                    <img
+                    <Image
                       src={img}
                       alt={`View ${i + 1}`}
-                      loading="lazy"
-                      draggable={false}
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = DEFAULT_IMAGE; }}
+                      fill
+                      unoptimized
                       className="absolute inset-0 h-full w-full object-cover object-center"
                     />
                   </button>

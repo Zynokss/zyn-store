@@ -21,7 +21,7 @@ import { neon } from '@/lib/neon';
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan',
   'Meknès', 'Oujda', 'Kenitra', 'Nador', 'Safi', 'Mohammedia', 'El Jadida',
-  'Beni Mellal', 'Taza', 'Khouribga', 'Kénitra', 'Larache', 'Ksar El Kebir',
+  'Beni Mellal', 'Taza', 'Khouribga', 'Larache', 'Ksar El Kebir',
   'Guelmim', 'Berrechid', 'Khemisset', 'Taourirt', 'Berkane',
   'Sidi Slimane', 'Errachidia', 'Taroudant', 'Essaouira', 'Dakhla', 'Laâyoune', 'Autre'
 ];
@@ -342,7 +342,7 @@ export default function SettingsPage() {
               type="button"
               onClick={async () => {
                 try {
-                  await (neon.auth as any).signOut?.({});
+                  await neon?.auth?.signOut?.({});
                 } catch {}
                 if (typeof window !== 'undefined') {
                   window.location.href = '/';

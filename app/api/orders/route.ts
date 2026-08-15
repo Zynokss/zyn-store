@@ -39,7 +39,7 @@ export async function OPTIONS() {
 export async function GET(req: NextRequest) {
   try {
     const admin = await verifyAdminSession(req);
-    const user = await verifyUserSession(req);
+    const user = await verifyUserSession();
     const { searchParams } = new URL(req.url);
     const justMine = searchParams.get('mine') === 'true';
 
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await verifyUserSession(req);
+    const user = await verifyUserSession();
 
     const productIds = items
       .map((i: OrderItemInput) => i.product?.id || i.productId)
@@ -152,7 +152,13 @@ export async function POST(req: NextRequest) {
         total: verifiedTotal,
         status: 'PENDING_PAYMENT',
         items: {
-          create: orderItems.map(({ lineTotal, ...rest }) => rest),
+          create: orderItems.map(({ productId, selectedSize, selectedColor, quantity, price }) => ({
+            productId,
+            selectedSize,
+            selectedColor,
+            quantity,
+            price,
+          })),
         },
       },
       include: { items: true },

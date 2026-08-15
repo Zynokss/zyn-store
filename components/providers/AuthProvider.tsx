@@ -5,7 +5,7 @@ import { neon } from '@/lib/neon';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
-    <NeonAuthUIProvider emailOTP authClient={neon.auth as any}>
+    <NeonAuthUIProvider emailOTP authClient={neon.auth as unknown as Parameters<typeof NeonAuthUIProvider>[0]['authClient']}>
       {children}
     </NeonAuthUIProvider>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Search, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -72,10 +73,12 @@ export function SearchModal({ isOpen, onClose, query, setQuery, products }: Sear
                 className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  {/* eslint-disable-next-html-element-for-img */}
-                  <img
+                  <Image
                     src={product.images?.[0] || 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop'}
                     alt={product.name}
+                    width={40}
+                    height={48}
+                    unoptimized
                     className="h-12 w-10 object-cover rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
                   />
                   <div>

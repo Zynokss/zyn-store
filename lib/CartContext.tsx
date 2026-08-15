@@ -37,15 +37,9 @@ function buildItemKey(id: string, size?: string, color?: string) {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setCart(safeParse<CartItem[]>(CART_STORAGE_KEY, []));
-    setFavorites(safeParse<string[]>(FAV_STORAGE_KEY, []));
-    setHydrated(true);
-  }, []);
+  const [cart, setCart] = useState<CartItem[]>(() => safeParse<CartItem[]>(CART_STORAGE_KEY, []));
+  const [favorites, setFavorites] = useState<string[]>(() => safeParse<string[]>(FAV_STORAGE_KEY, []));
+  const [hydrated] = useState(true);
 
   useEffect(() => {
     if (hydrated) {

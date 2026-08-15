@@ -22,7 +22,7 @@ export async function verifyAdminSession(req: NextRequest): Promise<{ id: string
   }
 }
 
-export async function verifyUserSession(req: NextRequest): Promise<{ id: string; email: string; role: string } | null> {
+export async function verifyUserSession(): Promise<{ id: string; email: string; role: string } | null> {
   try {
     const { auth } = await import('@/lib/auth');
     const { data: session } = (await auth.getSession()) as {
@@ -39,4 +39,3 @@ export async function verifyUserSession(req: NextRequest): Promise<{ id: string;
     return null;
   }
 }
-

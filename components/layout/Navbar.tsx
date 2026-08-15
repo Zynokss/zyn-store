@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { SignedIn, SignedOut } from '@neondatabase/neon-js/auth/react/ui';
 import { ShoppingBag, Search, Heart, User, Globe, Sun, Moon, ChevronDown, Check, Package, Settings, LogOut } from 'lucide-react';
 import { useTranslation } from '@/components/providers/IntlProvider';
@@ -17,13 +16,22 @@ interface NavbarProps {
   isFavoritesFilterActive?: boolean;
 }
 
+interface NeonSessionUser {
+  id?: string;
+  name?: string;
+  email?: string;
+}
+
+interface NeonSessionData {
+  user?: NeonSessionUser;
+}
+
 export function Navbar({
   onOpenCart,
   onOpenSearch,
   onToggleFavoritesFilter,
   isFavoritesFilterActive = false,
 }: NavbarProps) {
-  const router = useRouter();
   const { locale, setLocale, t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { totalItems, favoriteCount } = useCart();
@@ -33,8 +41,9 @@ export function Navbar({
   const langRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const useSession = (neon.auth as any).useSession as () => {
-    data?: { user?: { name?: string; email?: string } };
+  const useSession = neon.auth.useSession as () => {
+    data?: NeonSessionData;
+    isPending?: boolean;
   };
   const { data: sessionData } = useSession?.() || {};
 
@@ -269,7 +278,7 @@ export function Navbar({
                         onClick={async () => {
                           setUserMenuOpen(false);
                           try {
-                            await (neon.auth as any).signOut?.({});
+                            await neon.auth.signOut?.({});
                           } catch {}
                           if (typeof window !== 'undefined') {
                             window.location.href = '/';

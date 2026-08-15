@@ -26,14 +26,15 @@ export function ThemeProvider({
   enableSystem?: boolean;
   disableTransitionOnChange?: boolean;
 }) {
-  const [theme, setThemeState] = React.useState<Theme | undefined>(undefined);
-
-  React.useEffect(() => {
-    const stored = (typeof window !== 'undefined' ? window.localStorage.getItem(THEME_STORAGE_KEY) : null) as Theme | null;
+  const [theme, setThemeState] = React.useState<Theme>(() => {
+    if (typeof window === 'undefined') return defaultTheme;
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
     const initial = (stored && THEMES.includes(stored) ? stored : defaultTheme) as Theme;
     applyTheme(initial, false);
-    setThemeState(initial);
+    return initial;
+  });
 
+  React.useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === THEME_STORAGE_KEY && e.newValue && THEMES.includes(e.newValue as Theme)) {
         applyTheme(e.newValue as Theme, true);
@@ -42,7 +43,7 @@ export function ThemeProvider({
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, [defaultTheme]);
+  }, []);
 
   const setTheme = React.useCallback((next: Theme) => {
     applyTheme(next, true);

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   const email = searchParams.get('email')?.trim();
   const query = searchParams.get('query')?.trim();
 
-  const user = await verifyUserSession(req);
+  const user = await verifyUserSession();
 
   try {
     if (user && !orderId && !email) {

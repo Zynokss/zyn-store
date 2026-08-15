@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   User,
   Package,
@@ -53,7 +54,6 @@ const CIH_ACCOUNT_DETAILS = {
   rib: '230726251607921102440031',
 };
 
-// FIX 2: Removed duplicate 'Kénitra' entry
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan',
   'Meknès', 'Oujda', 'Kenitra', 'Nador', 'Safi', 'Mohammedia', 'El Jadida',
@@ -123,7 +123,7 @@ export default function AccountPage() {
         }
       } catch (err) {
         console.error('Failed to load user data:', err);
-      } finally { // FIX 1: Removed stray 'font-sans' string before finally
+      } finally {
         setLoadingOrders(false);
       }
     }
@@ -251,7 +251,6 @@ export default function AccountPage() {
           <button
             onClick={async () => {
               try {
-                // FIX 3: Safe sign out optional chaining
                 await neon?.auth?.signOut?.({});
               } catch {}
               if (typeof window !== 'undefined') {
@@ -361,14 +360,16 @@ export default function AccountPage() {
                             <h4 className="text-[10px] font-bold uppercase text-zinc-400 tracking-wider">{t('itemsOrdered')}</h4>
                             {(order.items || []).map((item) => (
                               <div key={item.id} className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                                {/* eslint-disable-next-html-element-for-img */}
-                                <img
+                                <Image
                                   src={
                                     item.product?.images?.[0] ||
                                     item.product?.image ||
                                     'https://images.unsplash.com/photo-1556905055-8f358a7a47b2'
                                   }
                                   alt={item.product?.name || 'Produit'}
+                                  width={40}
+                                  height={48}
+                                  unoptimized
                                   className="h-12 w-10 object-cover rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800"
                                 />
                                 <div className="flex-1">

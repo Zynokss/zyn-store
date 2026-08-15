@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { X, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { CartItem } from '@/lib/types';
@@ -67,10 +68,12 @@ export function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, onRemoveI
                     key={itemKey}
                     className="flex gap-4 p-3 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/30"
                   >
-                    {/* eslint-disable-next-html-element-for-img */}
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.name}
+                      width={64}
+                      height={80}
+                      unoptimized
                       className="h-20 w-16 object-cover rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
                     />
                     <div className="flex-1 flex flex-col justify-between">

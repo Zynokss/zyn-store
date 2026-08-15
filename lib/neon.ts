@@ -11,10 +11,20 @@ const REMOTE_NEON_DATAAPI_URL =
   process.env.NEON_DATAAPI_BASE_URL ||
   'https://ep-small-wave-b1l95pmw.apirest.c-5.eu-central-1.aws.neon.tech/neondb/rest/v1';
 
+interface GlobalProcessContainer {
+  process?: {
+    versions?: {
+      node?: string;
+    };
+  };
+}
+
+const globalProcess = (globalThis as unknown as GlobalProcessContainer).process;
+
 const isServerRuntime =
   typeof globalThis !== 'undefined' &&
-  typeof (globalThis as any).process !== 'undefined' &&
-  !!(globalThis as any).process?.versions?.node;
+  typeof globalProcess !== 'undefined' &&
+  !!globalProcess?.versions?.node;
 
 const isBrowser = !isServerRuntime && typeof window !== 'undefined';
 
@@ -47,7 +57,7 @@ export const neon = createClient({
   dataApi: {
     url: dataApiUrl,
   },
-} as any) as any;
+});
 
 export { BetterAuthReactAdapter };
 export type NeonClient = typeof neon;

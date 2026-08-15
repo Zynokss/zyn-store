@@ -5,6 +5,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 import { IntlProvider } from '@/components/providers/IntlProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { CartProvider } from '@/lib/CartContext';
+import { BFCacheFix } from '@/components/providers/BFCacheFix';
 import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -12,7 +13,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'ZYN.STORE | Premium Apparel',
   description: 'Engineered garments & heavyweight essentials — small-batch independent streetwear studio.',
-  keywords: ['streetwear', 'apparel', 'fashion', 'essentials', 'made in Country'],
+  keywords: ['streetwear', 'apparel', 'fashion', 'essentials', 'made in Morocco'],
   openGraph: {
     title: 'ZYN.STORE | Premium Apparel',
     description: 'Considered clothing for everyday — engineered garments & heavyweight essentials.',
@@ -34,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth" className="dark" data-zyn-theme-applied="dark">
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${inter.className} bg-white text-zinc-900 dark:bg-zinc-950 dark:text-white antialiased transition-colors duration-200`}
         suppressHydrationWarning
@@ -43,6 +44,7 @@ export default function RootLayout({
           <AuthProvider>
             <IntlProvider>
               <CartProvider>
+                <BFCacheFix />
                 {children}
                 <Analytics />
               </CartProvider>
@@ -53,4 +55,3 @@ export default function RootLayout({
     </html>
   );
 }
-
