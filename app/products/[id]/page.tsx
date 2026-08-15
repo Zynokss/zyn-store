@@ -8,14 +8,14 @@ import { ArrowLeft, ShoppingBag, Heart, Check, Loader2, ChevronLeft, ChevronRigh
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/store/CartDrawer';
-import { useTranslation } from '@/components/providers/IntlProvider';
+import { useLanguage } from '@/components/providers/IntlProvider';
 import { useCart } from '@/lib/CartContext';
 import { Product } from '@/lib/types';
 
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=1000&auto=format&fit=crop';
 
 export default function ProductDetailPage() {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const params = useParams();
   const productId = params.id as string;
   const { addToCart, toggleFavorite, isFavorite, cart, updateQuantity, removeFromCart } = useCart();

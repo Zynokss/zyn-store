@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Loader2, ChevronLeft, ChevronRight, Sparkles, Truck, ShieldCheck, Zap, ArrowUpRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Sparkles, Truck, ShieldCheck, Zap, ArrowUpRight } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/store/CartDrawer';
@@ -11,13 +11,57 @@ import { SearchModal } from '@/components/store/SearchModal';
 import { ProductCard } from '@/components/store/ProductCard';
 import { useCart } from '@/lib/CartContext';
 import { Product as CatalogProduct } from '@/lib/types';
+import { useLanguage } from '@/components/providers/IntlProvider';
 
 const ITEMS_PER_PAGE = 8;
+
+// Reusable shimmer block component for Facebook-style loading animation
+const SkeletonBlock = ({ className }: { className?: string }) => (
+  <div className={`relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 ${className || ''}`}>
+    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent" />
+  </div>
+);
+
+// Shimmer skeleton grid matching ProductCard layout
+function ProductGridSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden font-sans"
+        >
+          {/* Image Frame Skeleton */}
+          <SkeletonBlock className="aspect-[3/4] w-full" />
+
+          {/* Card Info Content Skeleton */}
+          <div className="flex flex-col flex-1 p-4 space-y-3">
+            <div className="space-y-1">
+              <SkeletonBlock className="h-2 w-1/3 rounded-full" />
+              <SkeletonBlock className="h-3.5 w-3/4 rounded-full" />
+            </div>
+
+            <div className="flex items-center justify-between pt-1 border-t border-zinc-100 dark:border-zinc-800/80">
+              <SkeletonBlock className="h-3 w-1/4 rounded-full" />
+              <SkeletonBlock className="h-2 w-1/5 rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-5 gap-2 pt-2 mt-auto">
+              <SkeletonBlock className="col-span-3 h-8 rounded-full" />
+              <SkeletonBlock className="col-span-2 h-8 rounded-full" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function CatalogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { cart, isFavorite, updateQuantity, removeFromCart } = useCart();
+  const { t } = useLanguage();
 
   const catalogRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +80,18 @@ function CatalogContent() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Translate dynamic database categories safely
+  const formatCategoryName = useCallback(
+    (cat: string) => {
+      if (!cat) return '';
+      if (cat === 'All Items') return t('allItems');
+      const key = cat.toLowerCase().trim();
+      const translated = t(key);
+      return translated && translated !== key ? translated : cat;
+    },
+    [t]
+  );
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -165,7 +221,7 @@ function CatalogContent() {
       )}
 
       <main className="flex-1 w-full overflow-hidden">
-        {/* Full-Bleed ASOS-Style Hero Section */}
+        {/* Full-Bleed Hero Section */}
         <section className="relative w-full min-h-[520px] sm:min-h-[640px] flex items-center justify-center bg-zinc-900 overflow-hidden">
           <Image
             src="https://images.unsplash.com/photo-1544441893-675973e31985?w=1600&auto=format&fit=crop"
@@ -179,7 +235,7 @@ function CatalogContent() {
           {/* Overlaid Editorial Content */}
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
             <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#9ae600]">
-              LIMITED DROP — SEASON 04
+              {t('piecesLimited')}
             </span>
 
             <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black uppercase tracking-tighter text-white leading-none">
@@ -187,7 +243,7 @@ function CatalogContent() {
             </h1>
 
             <p className="text-xs sm:text-base font-medium text-zinc-200 max-w-xl mx-auto leading-relaxed">
-              Heavyweight cotton garments, custom drop-shoulder cuts, and engineered Moroccan streetwear silhouettes.
+              {t('subscribeText')}
             </p>
 
             <div className="pt-4 flex items-center justify-center gap-4 flex-wrap">
@@ -195,13 +251,13 @@ function CatalogContent() {
                 onClick={() => scrollToSection(catalogRef)}
                 className="bg-white text-zinc-900 hover:bg-[#9ae600] hover:text-black px-8 py-3.5 text-xs font-bold uppercase tracking-wider transition-colors shadow-lg cursor-pointer min-w-[160px] rounded-full"
               >
-                Shop Apparel
+                {t('viewCatalog')}
               </button>
               <button
                 onClick={() => handleCategoryChange('Hoodies')}
                 className="bg-zinc-950/80 backdrop-blur-md text-white border border-zinc-700 hover:border-white px-8 py-3.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer min-w-[160px] rounded-full"
               >
-                Shop Hoodies
+                {formatCategoryName('Hoodies')}
               </button>
             </div>
           </div>
@@ -213,29 +269,29 @@ function CatalogContent() {
             <div className="flex items-center justify-center sm:justify-start gap-3">
               <Truck className="h-4 w-4 text-zinc-500 dark:text-[#9ae600] shrink-0" />
               <div>
-                <span className="font-bold block text-zinc-900 dark:text-white text-xs">Nationwide Delivery</span>
-                <span className="text-zinc-500 dark:text-zinc-400 text-[11px]">Express via Amana</span>
+                <span className="font-bold block text-zinc-900 dark:text-white text-xs">{t('freeShipping')}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 text-[11px]">{t('freeShippingOn')}</span>
               </div>
             </div>
             <div className="flex items-center justify-center sm:justify-start gap-3">
               <Zap className="h-4 w-4 text-zinc-500 dark:text-[#9ae600] shrink-0" />
               <div>
-                <span className="font-bold block text-zinc-900 dark:text-white text-xs">Limited Batches</span>
-                <span className="text-zinc-500 dark:text-zinc-400 text-[11px]">Small-batch drops</span>
+                <span className="font-bold block text-zinc-900 dark:text-white text-xs">{t('returns')}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 text-[11px]">{t('returnsPolicy')}</span>
               </div>
             </div>
             <div className="flex items-center justify-center sm:justify-start gap-3">
               <Sparkles className="h-4 w-4 text-zinc-500 dark:text-[#9ae600] shrink-0" />
               <div>
-                <span className="font-bold block text-zinc-900 dark:text-white text-xs">Heavyweight Cotton</span>
-                <span className="text-zinc-500 dark:text-zinc-400 text-[11px]">Structured 400GSM yarn</span>
+                <span className="font-bold block text-zinc-900 dark:text-white text-xs">{t('ecoPackaging')}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 text-[11px]">{t('ecoDetails')}</span>
               </div>
             </div>
             <div className="flex items-center justify-center sm:justify-start gap-3">
               <ShieldCheck className="h-4 w-4 text-zinc-500 dark:text-[#9ae600] shrink-0" />
               <div>
-                <span className="font-bold block text-zinc-900 dark:text-white text-xs">Authentic Studio</span>
-                <span className="text-zinc-500 dark:text-zinc-400 text-[11px]">Independent design</span>
+                <span className="font-bold block text-zinc-900 dark:text-white text-xs">{t('securePayment')}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 text-[11px]">{t('secureDetails')}</span>
               </div>
             </div>
           </div>
@@ -249,6 +305,7 @@ function CatalogContent() {
             <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
               {dynamicCategories.map((catName) => {
                 const isActive = selectedCategory === catName && !showFavoritesOnly;
+                const label = formatCategoryName(catName);
                 return (
                   <button
                     key={catName}
@@ -259,7 +316,7 @@ function CatalogContent() {
                         : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-transparent hover:border-zinc-300 dark:hover:border-zinc-700'
                     }`}
                   >
-                    {catName}
+                    {label}
                   </button>
                 );
               })}
@@ -272,7 +329,7 @@ function CatalogContent() {
                 <input
                   type="text"
                   aria-label="Search catalog"
-                  placeholder="Filter items..."
+                  placeholder={t('searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 py-1.5 pl-8 pr-3 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 rounded-full focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors"
@@ -285,9 +342,9 @@ function CatalogContent() {
                 onChange={(e) => handleSortChange(e.target.value as 'featured' | 'low-to-high' | 'high-to-low')}
                 className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 py-1.5 px-3 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200 rounded-full focus:outline-none cursor-pointer transition-colors"
               >
-                <option value="featured">Sort: Featured</option>
-                <option value="low-to-high">Price: Low to High</option>
-                <option value="high-to-low">Price: High to Low</option>
+                <option value="featured">{t('featured')}</option>
+                <option value="low-to-high">{t('lowToHigh')}</option>
+                <option value="high-to-low">{t('highToLow')}</option>
               </select>
             </div>
           </div>
@@ -296,22 +353,19 @@ function CatalogContent() {
         {/* Main Product Grid */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white uppercase">
-              {showFavoritesOnly ? 'Saved Items' : selectedCategory} <span className="text-xs font-normal text-zinc-500">({filteredProducts.length})</span>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white uppercase text-start">
+              {showFavoritesOnly ? t('cart') : formatCategoryName(selectedCategory)}{' '}
+              <span className="text-xs font-normal text-zinc-500">({filteredProducts.length})</span>
             </h2>
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 text-zinc-500 space-y-3">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-900 dark:text-white" />
-              <p className="text-xs font-medium text-zinc-400">Loading catalog...</p>
-            </div>
+            <ProductGridSkeleton count={8} />
           ) : filteredProducts.length === 0 ? (
             <div className="p-16 border border-zinc-200 dark:border-zinc-800 text-center space-y-4 bg-zinc-50 dark:bg-zinc-900/30 rounded-2xl">
               <Search className="h-8 w-8 mx-auto text-zinc-400" />
               <div>
-                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">No products found matching your filter.</p>
-                <p className="text-xs text-zinc-500 mt-1">Try clearing your search query or switching categories.</p>
+                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t('emptyCart')}</p>
               </div>
               <button
                 onClick={() => {
@@ -324,7 +378,7 @@ function CatalogContent() {
                 }}
                 className="text-xs font-semibold underline text-zinc-900 dark:text-white transition-all cursor-pointer"
               >
-                Reset Catalog Filters
+                {t('resetFilters')}
               </button>
             </div>
           ) : (
@@ -347,11 +401,11 @@ function CatalogContent() {
                     disabled={currentPage === 1}
                     className="flex items-center gap-2 px-4 py-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-600 disabled:opacity-40 font-semibold transition-colors cursor-pointer rounded-full"
                   >
-                    <ChevronLeft className="h-4 w-4" /> Previous
+                    <ChevronLeft className="h-4 w-4" /> {t('back')}
                   </button>
 
                   <span className="font-semibold text-zinc-500">
-                    Page {currentPage} of {totalPages}
+                    {currentPage} / {totalPages}
                   </span>
 
                   <button
@@ -359,7 +413,7 @@ function CatalogContent() {
                     disabled={currentPage === totalPages}
                     className="flex items-center gap-2 px-4 py-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-600 disabled:opacity-40 font-semibold transition-colors cursor-pointer rounded-full"
                   >
-                    Next <ChevronRight className="h-4 w-4" />
+                    {t('continue')} <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
               )}
@@ -373,14 +427,14 @@ function CatalogContent() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-8">
                 <div>
-                  <span className="text-[11px] font-bold text-[#9ae600] uppercase tracking-wider block">Spotlight Collection</span>
-                  <h3 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white uppercase">Heavyweight Hoodies</h3>
+                  <span className="text-[11px] font-bold text-[#9ae600] uppercase tracking-wider block">{t('curatedCollections')}</span>
+                  <h3 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white uppercase">{formatCategoryName('Hoodies')}</h3>
                 </div>
                 <button
                   onClick={() => handleCategoryChange('Hoodies')}
                   className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  <span>Explore All Hoodies</span>
+                  <span>{t('viewCatalog')}</span>
                   <ArrowUpRight className="h-4 w-4" />
                 </button>
               </div>
@@ -403,19 +457,16 @@ function CatalogContent() {
         <section className="my-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-zinc-900 text-white p-8 sm:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 rounded-2xl">
             <div className="space-y-3 max-w-xl z-10">
-              <span className="text-[11px] font-bold text-[#9ae600] uppercase tracking-wider block">Studio Focus</span>
+              <span className="text-[11px] font-bold text-[#9ae600] uppercase tracking-wider block">{t('subscribeStudio')}</span>
               <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-snug uppercase">
-                Built For Timeless Structure & Quality
+                {t('subscribeText')}
               </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Precision cut, heavyweight cotton density, and custom seams designed to hold structured fits across seasons.
-              </p>
             </div>
             <button
               onClick={() => scrollToSection(catalogRef)}
               className="z-10 shrink-0 bg-white text-zinc-900 hover:bg-[#9ae600] hover:text-black px-6 py-3 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer rounded-full"
             >
-              Explore Collection
+              {t('viewCatalog')}
             </button>
           </div>
         </section>
@@ -426,14 +477,14 @@ function CatalogContent() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-8">
                 <div>
-                  <span className="text-[11px] font-bold text-[#9ae600] uppercase tracking-wider block">Spotlight Collection</span>
-                  <h3 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white uppercase">Essential Tees</h3>
+                  <span className="text-[11px] font-bold text-[#9ae600] uppercase tracking-wider block">{t('curatedCollections')}</span>
+                  <h3 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white uppercase">{formatCategoryName('Tees')}</h3>
                 </div>
                 <button
                   onClick={() => handleCategoryChange('Tees')}
                   className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  <span>Explore All Tees</span>
+                  <span>{t('viewCatalog')}</span>
                   <ArrowUpRight className="h-4 w-4" />
                 </button>
               </div>
@@ -456,21 +507,21 @@ function CatalogContent() {
         <section className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-900 text-white py-16 px-4 sm:px-6 lg:px-8 mt-16">
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
             <div className="md:col-span-8 space-y-4">
-              <span className="text-xs font-bold text-[#9ae600] uppercase tracking-wider block">ZYN Studio Story</span>
+              <span className="text-xs font-bold text-[#9ae600] uppercase tracking-wider block">{t('subscribeStudio')}</span>
               <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight uppercase">
-                Independent Streetwear Studio Based In Country
+                ZYN STREETWEAR STUDIO
               </h2>
               <p className="text-xs text-zinc-400 max-w-xl leading-relaxed">
-                Designing limited-drop apparel with custom heavy cotton blends and tailored silhouettes. Focused on independent design, precision fit, and small-batch craftsmanship.
+                {t('subscribeText')}
               </p>
             </div>
             <div className="md:col-span-4 flex flex-col items-start md:items-end justify-center border-t md:border-t-0 md:border-l border-zinc-800 pt-6 md:pt-0 md:pl-8 space-y-4">
               <div className="text-left md:text-right">
-                <span className="text-[11px] text-zinc-500 uppercase block">Location</span>
-                <span className="text-xs font-bold text-white uppercase">City / Country</span>
+                <span className="text-[11px] text-zinc-500 uppercase block">{t('country')}</span>
+                <span className="text-xs font-bold text-white uppercase">Morocco</span>
               </div>
               <div className="text-left md:text-right">
-                <span className="text-[11px] text-zinc-500 uppercase block">Drop Status</span>
+                <span className="text-[11px] text-zinc-500 uppercase block">{t('newDrop')}</span>
                 <span className="text-xs font-bold text-[#9ae600] uppercase">Season 04 Active</span>
               </div>
             </div>
@@ -501,8 +552,8 @@ export default function CatalogPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
-          <Loader2 className="h-6 w-6 animate-spin text-zinc-900 dark:text-white" />
+        <div className="min-h-screen bg-white dark:bg-zinc-950 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <ProductGridSkeleton count={8} />
         </div>
       }
     >

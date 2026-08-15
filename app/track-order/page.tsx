@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Search, Package, Clock, CheckCircle2, Truck, AlertCircle, Loader2, XCircle } from 'lucide-react';
 import { StoreLayout } from '@/components/layout/StoreLayout';
+import { useLanguage } from '@/components/providers/IntlProvider';
 
 interface Order {
   id: string;
@@ -20,6 +21,8 @@ interface Order {
 }
 
 export default function TrackOrderPage() {
+  const { t } = useLanguage();
+
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[] | null>(null);
@@ -49,26 +52,26 @@ export default function TrackOrderPage() {
       case 'DELIVERED':
       case 'COMPLETED':
         return {
-          label: 'LIVRÉ',
+          label: t('delivered'),
           icon: <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-[#9ae600]" />,
           colorClass: 'text-emerald-500 dark:text-[#9ae600]',
         };
       case 'SHIPPED':
         return {
-          label: 'EXPÉDIÉ',
+          label: t('shipped'),
           icon: <Truck className="h-4 w-4 text-blue-500 dark:text-sky-400" />,
           colorClass: 'text-blue-500 dark:text-sky-400',
         };
       case 'PROCESSING':
         return {
-          label: 'EN COURS DE TRAITEMENT',
+          label: t('processing'),
           icon: <Clock className="h-4 w-4 text-amber-500 dark:text-amber-400" />,
           colorClass: 'text-amber-500 dark:text-amber-400',
         };
       case 'CANCELLED':
       case 'CANCELED':
         return {
-          label: 'CANCELED',
+          label: t('canceled'),
           icon: <XCircle className="h-4 w-4 text-rose-500 dark:text-rose-400" />,
           colorClass: 'text-rose-500 dark:text-rose-400',
         };
@@ -76,7 +79,7 @@ export default function TrackOrderPage() {
       case 'PENDING_PAYMENT':
       default:
         return {
-          label: 'EN ATTENTE DE CONFIRMATION',
+          label: t('pendingPayment'),
           icon: <Package className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />,
           colorClass: 'text-zinc-500 dark:text-zinc-400',
         };
@@ -90,13 +93,13 @@ export default function TrackOrderPage() {
         {/* Header Title */}
         <div className="text-center space-y-3">
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#9ae600] block">
-            Shipment Status
+            {t('shipmentStatus')}
           </span>
           <h1 className="text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-zinc-900 dark:text-white">
-            Track Your Order
+            {t('trackOrderTitle')}
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium max-w-md mx-auto leading-relaxed">
-            Enter your Order ID or Email address to view real-time shipment status and tracking details.
+            {t('trackOrderSubtitle')}
           </p>
         </div>
 
@@ -107,7 +110,7 @@ export default function TrackOrderPage() {
             <input
               type="text"
               required
-              placeholder="Enter Order ID or Email..."
+              placeholder={t('trackInputPlaceholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 py-3 pl-10 pr-4 text-xs font-medium text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-400 dark:focus:border-zinc-600 focus:bg-white dark:focus:bg-zinc-900 focus:outline-none transition-all"
@@ -118,7 +121,7 @@ export default function TrackOrderPage() {
             disabled={loading}
             className="rounded-full bg-zinc-900 text-white hover:bg-[#9ae600] hover:text-black dark:bg-white dark:text-zinc-900 dark:hover:bg-[#9ae600] dark:hover:text-black px-7 py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 shrink-0"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Track Order'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('trackBtn')}
           </button>
         </form>
 
@@ -129,7 +132,7 @@ export default function TrackOrderPage() {
               <div className="p-12 text-center bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-2xl space-y-2">
                 <AlertCircle className="h-8 w-8 text-zinc-400 mx-auto" />
                 <p className="text-xs font-bold uppercase text-zinc-600 dark:text-zinc-400">
-                  No orders found matching &quot;{query}&quot;
+                  {t('noOrdersFound')} &quot;{query}&quot;
                 </p>
               </div>
             ) : (
@@ -143,10 +146,10 @@ export default function TrackOrderPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80 pb-4">
                       <div>
                         <span className="text-[10px] font-semibold text-zinc-400 uppercase block">
-                          Order ID: {order.id}
+                          {t('orderNo')}: {order.id}
                         </span>
                         <p className="text-xs font-bold uppercase text-zinc-900 dark:text-white mt-0.5">
-                          Placed on {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+                          {t('placedOn')} {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-950 px-4 py-1.5 rounded-full border border-zinc-200/80 dark:border-zinc-800 shadow-sm w-fit">
@@ -173,7 +176,7 @@ export default function TrackOrderPage() {
                               {item.product?.name}
                             </h4>
                             <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">
-                              Size: {item.selectedSize || 'Standard'} | Qty: {item.quantity}
+                              {t('size')}: {item.selectedSize || 'Standard'} | {t('quantity')}: {item.quantity}
                             </p>
                           </div>
                         </div>
@@ -181,7 +184,7 @@ export default function TrackOrderPage() {
                     </div>
 
                     <div className="border-t border-zinc-100 dark:border-zinc-800/80 pt-3 flex justify-between items-center text-xs font-bold uppercase">
-                      <span className="text-zinc-500">Total Paid</span>
+                      <span className="text-zinc-500">{t('totalPaid')}</span>
                       <span className="text-zinc-900 dark:text-[#9ae600] font-extrabold text-sm">
                         {order.total.toFixed(2)} MAD
                       </span>

@@ -4,8 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Mail, MessageSquare, Send, CheckCircle2, Loader2, Clock } from 'lucide-react';
 import { StoreLayout } from '@/components/layout/StoreLayout';
+import { useLanguage } from '@/components/providers/IntlProvider';
 
 export default function ContactPage() {
+  const { t } = useLanguage();
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -50,19 +53,19 @@ export default function ContactPage() {
           href="/"
           className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to Store
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> {t('returnToStore')}
         </Link>
 
         {/* Page Header */}
         <div className="text-center space-y-3 max-w-xl mx-auto">
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#9ae600] block">
-            Customer Support
+            {t('customerSupport')}
           </span>
           <h1 className="text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-zinc-900 dark:text-white">
-            Get In Touch
+            {t('contactTitle')}
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-normal leading-relaxed">
-            Have questions about your order, shipping policies, or sizing? Our support team responds within 24 hours.
+            {t('contactSubtitle')}
           </p>
         </div>
 
@@ -73,13 +76,17 @@ export default function ContactPage() {
             
             {/* Direct Contact Card */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-white space-y-5 shadow-lg">
-              <span className="text-xs font-bold text-[#9ae600] uppercase tracking-wider block">Direct Contact</span>
+              <span className="text-xs font-bold text-[#9ae600] uppercase tracking-wider block">
+                {t('directContact')}
+              </span>
               
               <div className="space-y-4 text-xs font-medium">
                 <div className="flex items-start gap-3">
                   <MessageSquare className="h-5 w-5 text-[#9ae600] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">WhatsApp Support</span>
+                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">
+                      {t('whatsappSupport')}
+                    </span>
                     <a
                       href="https://wa.me/212671396595"
                       target="_blank"
@@ -94,7 +101,9 @@ export default function ContactPage() {
                 <div className="flex items-start gap-3">
                   <Mail className="h-5 w-5 text-[#9ae600] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">Email Address</span>
+                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">
+                      {t('emailAddress')}
+                    </span>
                     <a
                       href="mailto:support@zyn.store"
                       className="font-bold text-white hover:text-[#9ae600] transition-colors"
@@ -107,8 +116,12 @@ export default function ContactPage() {
                 <div className="flex items-start gap-3">
                   <Clock className="h-5 w-5 text-[#9ae600] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">Working Hours</span>
-                    <span className="font-bold text-white">Mon - Sat (09:00 - 19:00 GMT+1)</span>
+                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">
+                      {t('workingHours')}
+                    </span>
+                    <span className="font-bold text-white">
+                      {t('workingHoursVal')}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -116,9 +129,11 @@ export default function ContactPage() {
 
             {/* Policy Summary Card */}
             <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 space-y-2 text-xs font-normal text-zinc-600 dark:text-zinc-400">
-              <h4 className="font-bold uppercase text-zinc-900 dark:text-white tracking-wider">Shipping &amp; Return Policies</h4>
+              <h4 className="font-bold uppercase text-zinc-900 dark:text-white tracking-wider">
+                {t('policiesTitle')}
+              </h4>
               <p className="leading-relaxed">
-                Orders ship nationwide via <strong>Amana Colis Postaux</strong> (24-48 hours delivery). Returns are accepted within 7 days of delivery for unworn items with tags attached.
+                {t('policiesBody')}
               </p>
             </div>
           </div>
@@ -128,9 +143,11 @@ export default function ContactPage() {
             {submitted ? (
               <div className="text-center py-12 space-y-4">
                 <CheckCircle2 className="h-12 w-12 text-[#9ae600] mx-auto" />
-                <h3 className="text-xl font-extrabold uppercase text-zinc-900 dark:text-white">Message Delivered!</h3>
+                <h3 className="text-xl font-extrabold uppercase text-zinc-900 dark:text-white">
+                  {t('msgDelivered')}
+                </h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 font-normal max-w-sm mx-auto leading-relaxed">
-                  Thank you for reaching out. We have logged your request and will send a reply to <strong>{formData.email}</strong>.
+                  {t('msgThankYou')}
                 </p>
                 <button
                   onClick={() => {
@@ -139,13 +156,13 @@ export default function ContactPage() {
                   }}
                   className="mt-4 text-xs font-bold uppercase text-zinc-900 dark:text-[#9ae600] underline cursor-pointer hover:no-underline transition-all"
                 >
-                  Send another message
+                  {t('sendAnother')}
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
-                  Send A Message
+                  {t('sendMessage')}
                 </span>
 
                 {error && (
@@ -157,7 +174,7 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold uppercase text-zinc-500 mb-1.5 block">
-                      Full Name *
+                      {t('fullName')}
                     </label>
                     <input
                       type="text"
@@ -171,7 +188,7 @@ export default function ContactPage() {
 
                   <div>
                     <label className="text-xs font-bold uppercase text-zinc-500 mb-1.5 block">
-                      Email Address *
+                      {t('emailAddress')}
                     </label>
                     <input
                       type="email"
@@ -186,7 +203,7 @@ export default function ContactPage() {
 
                 <div>
                   <label className="text-xs font-bold uppercase text-zinc-500 mb-1.5 block">
-                    Subject
+                    {t('subject')}
                   </label>
                   <select
                     value={formData.subject}
@@ -203,12 +220,12 @@ export default function ContactPage() {
 
                 <div>
                   <label className="text-xs font-bold uppercase text-zinc-500 mb-1.5 block">
-                    Your Message *
+                    {t('yourMessage')}
                   </label>
                   <textarea
                     required
                     rows={5}
-                    placeholder="Describe your inquiry or include your order reference number..."
+                    placeholder={t('messagePlaceholder')}
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-4 text-xs font-normal text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors"
@@ -220,7 +237,7 @@ export default function ContactPage() {
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-2 rounded-full bg-zinc-900 text-white hover:bg-[#9ae600] hover:text-black dark:bg-white dark:text-zinc-900 dark:hover:bg-[#9ae600] dark:hover:text-black py-4 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send Message
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {t('contactSend')}
                 </button>
               </form>
             )}

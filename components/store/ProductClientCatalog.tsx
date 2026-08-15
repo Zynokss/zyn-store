@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, SlidersHorizontal, X, Heart } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
+import { useLanguage } from '@/components/providers/IntlProvider';
 import { ProductCard } from './ProductCard';
 
 const DEFAULT_CATEGORIES = [
@@ -33,6 +34,7 @@ export function ProductClientCatalog({
   onToast,
 }: ProductClientCatalogProps) {
   const { favorites, isFavorite } = useCart();
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState('All Items');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -142,6 +144,7 @@ export function ProductClientCatalog({
           <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none -mx-1 px-1 sm:mx-0 sm:px-0">
             {catalogCategories.map((cat) => {
               const active = selectedCategory === cat;
+              const displayCat = cat === 'All Items' ? t('allItems') : cat;
               return (
                 <button
                   key={cat}
@@ -152,7 +155,7 @@ export function ProductClientCatalog({
                       : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-transparent hover:border-zinc-300 dark:hover:border-zinc-700'
                   }`}
                 >
-                  {cat}
+                  {displayCat}
                 </button>
               );
             })}
@@ -172,7 +175,7 @@ export function ProductClientCatalog({
               aria-pressed={showFavoritesOnly}
             >
               <Heart className={`h-3.5 w-3.5 ${showFavoritesOnly ? 'fill-current' : ''}`} />
-              Favoris ({favorites.length})
+              {t('favorites') || 'Favorites'} ({favorites.length})
             </button>
 
             {/* Search Input */}
@@ -180,7 +183,7 @@ export function ProductClientCatalog({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
               <input
                 type="text"
-                placeholder="Rechercher un article..."
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-9 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 py-1.5 pl-8 pr-8 text-xs font-medium text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors"
@@ -202,10 +205,10 @@ export function ProductClientCatalog({
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="h-9 px-3.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer transition-colors"
             >
-              <option value="featured">En Vedette</option>
-              <option value="newest">Plus Récent</option>
-              <option value="low-to-high">Prix ↑</option>
-              <option value="high-to-low">Prix ↓</option>
+              <option value="featured">{t('featured')}</option>
+              <option value="newest">{t('newest')}</option>
+              <option value="low-to-high">{t('lowToHigh')}</option>
+              <option value="high-to-low">{t('highToLow')}</option>
             </select>
 
             {/* Filter Drawer Toggle */}
@@ -220,16 +223,16 @@ export function ProductClientCatalog({
           <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40">
             <div className="flex items-center flex-wrap gap-2">
               <span className="text-xs font-semibold text-zinc-500">
-                Filtres actifs:
+                {t('activeFilters') || 'Active filters:'}
               </span>
               {selectedCategory !== 'All Items' && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200">
-                  {selectedCategory}
+                  {selectedCategory === 'All Items' ? t('allItems') : selectedCategory}
                 </span>
               )}
               {showFavoritesOnly && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs font-semibold uppercase text-rose-600 dark:text-rose-400">
-                  Favoris
+                  {t('favorites') || 'Favorites'}
                 </span>
               )}
               {searchQuery.trim() && (
@@ -239,7 +242,7 @@ export function ProductClientCatalog({
               )}
               {sortBy !== 'featured' && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase text-zinc-800 dark:text-zinc-200">
-                  Tri: {sortBy}
+                  {t('sort') || 'Sort'}: {t(sortBy) || sortBy}
                 </span>
               )}
             </div>
@@ -247,14 +250,14 @@ export function ProductClientCatalog({
               onClick={resetAll}
               className="text-xs font-semibold underline text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer"
             >
-              Réinitialiser
+              {t('resetFilters')}
             </button>
           </div>
         )}
 
         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
           <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-            {filteredProducts.length} ARTICLE{filteredProducts.length !== 1 ? 'S' : ''} TROUVÉ{filteredProducts.length !== 1 ? 'S' : ''}
+            {filteredProducts.length} {t('itemsFound')}
           </p>
         </div>
       </div>
@@ -264,13 +267,13 @@ export function ProductClientCatalog({
         <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/30 py-20 text-center space-y-3 px-4">
           <Search className="h-8 w-8 text-zinc-400" />
           <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-            Aucun article ne correspond à vos filtres.
+            {t('noProductsFound') || 'No products found matching your filter.'}
           </p>
           <button
             onClick={resetAll}
             className="mt-1 text-xs font-semibold underline text-zinc-900 dark:text-white cursor-pointer"
           >
-            Réinitialiser les filtres
+            {t('resetFilters')}
           </button>
         </div>
       ) : (

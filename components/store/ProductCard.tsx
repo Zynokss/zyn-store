@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ShoppingBag, Check, Heart, Eye } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
+import { useLanguage } from '@/components/providers/IntlProvider';
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +22,7 @@ export function ProductCard({
   showFavorite = true,
 }: ProductCardProps) {
   const { addToCart, toggleFavorite, isFavorite } = useCart();
+  const { t } = useLanguage();
   const [added, setAdded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -39,7 +41,7 @@ export function ProductCard({
     addToCart(product, defaultSize, { quantity: 1 });
 
     setAdded(true);
-    if (onToast) onToast(`Added to cart: ${product.name}`);
+    if (onToast) onToast(`${t('added')}: ${product.name}`);
     setTimeout(() => setAdded(false), 1800);
 
     if (onOpenCart) {
@@ -62,7 +64,7 @@ export function ProductCard({
       
       {/* Image Frame */}
       <div className="relative aspect-[3/4] w-full bg-zinc-100 dark:bg-zinc-950 overflow-hidden">
-        <Link href={`/products/${product.id}`} className="block h-full w-full">
+        <Link href={`/products/${product.id}`} className="block relative h-full w-full">
           <Image
             src={displayImage}
             alt={product.name}
@@ -84,7 +86,7 @@ export function ProductCard({
                 : 'bg-rose-950/80 text-rose-400 border border-rose-800/50'
             }`}
           >
-            {isInStock ? 'In Stock' : 'Sold Out'}
+            {isInStock ? t('inStock') : t('outOfStockBadge')}
           </span>
         </div>
 
@@ -133,7 +135,7 @@ export function ProductCard({
 
           <span className="text-[10px] font-semibold text-emerald-600 dark:text-[#9ae600] flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-[#9ae600] animate-pulse" />
-            {isInStock ? 'In Stock' : 'Out Of Stock'}
+            {isInStock ? t('inStock') : t('outOfStock')}
           </span>
         </div>
 
@@ -144,7 +146,7 @@ export function ProductCard({
             className="col-span-3 flex items-center justify-center gap-1.5 py-2 px-3 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 hover:bg-[#9ae600] hover:text-black hover:border-[#9ae600] text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider transition-all cursor-pointer text-center group/btn"
           >
             <Eye className="h-3.5 w-3.5 text-zinc-400 group-hover/btn:text-black transition-colors" />
-            <span>Details</span>
+            <span>{t('viewDetails')}</span>
           </Link>
 
           <button

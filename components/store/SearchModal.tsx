@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Search, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useLanguage } from '@/components/providers/IntlProvider';
 
 interface Product {
   id: string;
@@ -22,6 +23,8 @@ interface SearchModalProps {
 }
 
 export function SearchModal({ isOpen, onClose, query, setQuery, products }: SearchModalProps) {
+  const { t } = useLanguage();
+
   if (!isOpen) return null;
 
   const filtered = products.filter(
@@ -44,7 +47,7 @@ export function SearchModal({ isOpen, onClose, query, setQuery, products }: Sear
           <input
             type="text"
             autoFocus
-            placeholder="Search products or categories..."
+            placeholder={t('searchPlaceholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full bg-transparent text-sm font-semibold text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none"
@@ -62,7 +65,7 @@ export function SearchModal({ isOpen, onClose, query, setQuery, products }: Sear
         <div className="max-h-96 overflow-y-auto p-3 space-y-1">
           {query.trim() && filtered.length === 0 ? (
             <div className="text-center py-12 text-xs font-semibold uppercase text-zinc-400">
-              No results found for &quot;{query}&quot;
+              {t('noOrdersFound') || 'No results found for'} &quot;{query}&quot;
             </div>
           ) : (
             filtered.map((product) => (

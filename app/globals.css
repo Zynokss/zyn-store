@@ -70,3 +70,10 @@
   border-color: var(--neon-border, var(--border, #e4e4e7));
   outline-color: var(--neon-ring, var(--ring, #ccff00));
 }
+
+/* Shimmer Animation for loading skeletons */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
