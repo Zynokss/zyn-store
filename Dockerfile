@@ -21,8 +21,8 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install openssl for the runner as well
-RUN apk add --no-cache openssl
+# Install openssl AND curl for the runner (curl is needed for Coolify healthchecks)
+RUN apk add --no-cache openssl curl
 
 # Copy built assets from builder
 COPY --from=builder /app/public ./public
