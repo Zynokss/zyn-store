@@ -21,6 +21,10 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+# Tell Next.js to listen on all interfaces so health checks don't get refused
+ENV HOSTNAME="0.0.0.0"
+ENV PORT=3000
+
 # Install openssl AND curl for the runner (curl is needed for Coolify healthchecks)
 RUN apk add --no-cache openssl curl
 
