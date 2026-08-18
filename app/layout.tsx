@@ -6,7 +6,6 @@ import { IntlProvider } from '@/components/providers/IntlProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { CartProvider } from '@/lib/CartContext';
 import { BFCacheFix } from '@/components/providers/BFCacheFix';
-import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -46,7 +45,6 @@ export default function RootLayout({
               <CartProvider>
                 <BFCacheFix />
                 {children}
-                <Analytics />
               </CartProvider>
             </IntlProvider>
           </AuthProvider>

@@ -18,32 +18,8 @@ export async function GET(req: NextRequest) {
     });
     const totalRevenue = Number(revenueSum._sum.total || 0);
 
-    let totalVisitors = 0;
-    const token = process.env.VERCEL_AUTH_TOKEN;
-    const projectId = process.env.VERCEL_PROJECT_ID;
-
-    if (token && projectId) {
-      try {
-        const vercelRes = await fetch(
-          `https://vercel.com/api/v1/web-analytics/stats?projectId=${projectId}&environment=production`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            next: { revalidate: 60 },
-          }
-        );
-
-        if (vercelRes.ok) {
-          const analytics = await vercelRes.json();
-          totalVisitors = analytics?.pageviews?.value || analytics?.visitors?.value || 0;
-        }
-      } catch (err) {
-        console.error('Failed to query Vercel Analytics API:', err);
-      }
-    }
-
-    if (totalVisitors === 0) {
-      totalVisitors = await prisma.user.count();
-    }
+    // Direct database customer count (replaces Vercel Web Analytics API)
+    const totalVisitors = await prisma.user.count();
 
     const orderItems = await prisma.orderItem.findMany({
       include: { product: { select: { category: true } } },
