@@ -1,16 +1,13 @@
 @import "tailwindcss";
-
 @variant dark (&:where(.dark, .dark *));
 
 @layer base {
   html {
     scroll-behavior: smooth;
   }
-
   body {
     @apply bg-white text-zinc-900 transition-colors duration-200;
   }
-  
   .dark body {
     @apply bg-zinc-950 text-white;
   }
@@ -39,7 +36,6 @@
     --ring: #ccff00;
     --radius: 12px;
   }
-
   .dark {
     --background: #09090b;
     --foreground: #fafafa;
@@ -63,9 +59,7 @@
   }
 }
 
-.neon-auth-root *,
-.neon-auth-root *::before,
-.neon-auth-root *::after {
+.neon-auth-root *, .neon-auth-root *::before, .neon-auth-root *::after {
   box-sizing: border-box;
   border-color: var(--neon-border, var(--border, #e4e4e7));
   outline-color: var(--neon-ring, var(--ring, #ccff00));

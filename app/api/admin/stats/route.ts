@@ -22,13 +22,14 @@ export async function GET(req: NextRequest) {
     const totalVisitors = await prisma.user.count();
 
     const orderItems = await prisma.orderItem.findMany({
-      include: { product: { select: { category: true } } },
+      include: { product: { select: { category: true, price: true } } },
     });
 
     const categoryTotals: Record<string, number> = {};
     orderItems.forEach((item) => {
       const cat = item.product?.category || 'Uncategorized';
-      categoryTotals[cat] = (categoryTotals[cat] || 0) + item.price * item.quantity;
+      const price = item.product?.price || item.price || 0;
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + price * item.quantity;
     });
 
     const topCategories = Object.entries(categoryTotals).map(([name, total]) => ({
@@ -46,47 +47,33 @@ export async function GET(req: NextRequest) {
     const chartMap: Record<string, number> = {};
     recentOrders.forEach((ord) => {
       const dateLabel = new Date(ord.createdAt).toLocaleDateString('en-US', {
-        day: '2-digit',
         month: 'short',
+        day: 'numeric'
       });
-      chartMap[dateLabel] = (chartMap[dateLabel] || 0) + ord.total;
+      chartMap[dateLabel] = (chartMap[dateLabel] || 0) + Number(ord.total || 0);
     });
 
-    const dynamicChartData = Object.entries(chartMap).map(([month, topGross]) => ({
-      month,
-      firstHalf: Math.round(topGross * 0.6),
-      topGross,
+    const chartData = Object.entries(chartMap).map(([date, revenue]) => ({
+      date,
+      revenue
     }));
-
-    const pendingPayment = await prisma.order.count({ where: { status: 'PENDING_PAYMENT' } });
-    const processing = await prisma.order.count({ where: { status: 'PROCESSING' } });
-    const shipped = await prisma.order.count({ where: { status: 'SHIPPED' } });
-    const delivered = await prisma.order.count({ where: { status: 'DELIVERED' } });
-    const productsCount = await prisma.product.count();
-    const productsInStock = await prisma.product.count({ where: { inStock: true } });
-    const customersCount = await prisma.user.count();
 
     return NextResponse.json({
       success: true,
-      customers: totalVisitors,
-      revenue: totalRevenue,
-      deals: totalOrdersCount,
-      topCategories,
-      chartData: dynamicChartData,
-      breakdown: {
-        pendingPayment,
-        processing,
-        shipped,
-        delivered,
-        productsCount,
-        productsInStock,
-        customersCount,
-      },
+      stats: {
+        totalRevenue,
+        totalOrders: totalOrdersCount,
+        totalVisitors,
+        conversionRate: totalVisitors > 0 ? ((totalOrdersCount / totalVisitors) * 100).toFixed(1) + '%' : '0%',
+        topCategories,
+        chartData
+      }
     });
-  } catch (error) {
-    console.error('Failed to calculate stats:', error);
+
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch stats';
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch store stats' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

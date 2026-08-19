@@ -1,26 +1,16 @@
-import { createNeonAuth } from '@neondatabase/neon-js/auth/next/server';
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { prisma } from "@/lib/prisma"; // Make sure this path points to your prisma client
 
-const baseUrl = process.env.NEXT_PUBLIC_NEON_AUTH_URL || process.env.NEON_AUTH_BASE_URL;
-
-if (!baseUrl) {
-  console.warn(
-    '[neon-auth] NEXT_PUBLIC_NEON_AUTH_URL not found in env. ' +
-      'Add NEXT_PUBLIC_NEON_AUTH_URL=<your neon auth URL> to .env.local'
-  );
-}
-
-const cookieSecret =
-  process.env.NEON_AUTH_COOKIE_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  'zyn-store-neon-auth-cookie-secret-min-32-chars-long-and-secure-please-change-me-1234567890ABCDEF';
-
-export const auth = createNeonAuth({
-  baseUrl: baseUrl || 'https://example.neonauth.aws.neon.tech/db/auth',
-  cookies: {
-    secret: cookieSecret,
-    sessionDataTtl: 300,
+export const auth = betterAuth({
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+  emailAndPassword: {
+    enabled: true,
   },
-  logLevel: 'warn',
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+  },
 });
-
-export type { NeonAuth } from '@neondatabase/neon-js/auth/next/server';

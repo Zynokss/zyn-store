@@ -24,7 +24,7 @@ function formatProduct(p: RawProduct) {
       ? p.images[0]
       : p.image ||
         'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop';
-
+  
   return {
     id: String(p.id),
     name: String(p.name || ''),
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const productId = searchParams.get('id');
-
+    
     if (productId) {
       const product = await prisma.product.findUnique({
         where: { id: productId },
@@ -58,11 +58,11 @@ export async function GET(req: NextRequest) {
       }
       return NextResponse.json({ success: true, product: formatProduct(product) });
     }
-
+    
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
     });
-
+    
     return NextResponse.json({
       success: true,
       products: (products || []).map(formatProduct),
@@ -79,13 +79,12 @@ export async function POST(req: NextRequest) {
     if (!admin) {
       return NextResponse.json({ success: false, error: 'Admin authentication required' }, { status: 401 });
     }
-
+    
     const body = await req.json();
-
     if (!body.name) {
       return NextResponse.json({ success: false, error: 'Product name is required.' }, { status: 400 });
     }
-
+    
     const name = String(body.name).trim();
     const category = String(body.category || 'Streetwear').trim();
     const price = Math.max(0, Number(body.price) || 0);
@@ -94,18 +93,18 @@ export async function POST(req: NextRequest) {
       body.image ||
       (Array.isArray(body.images) && body.images.length > 0 ? body.images[0] : '') ||
       'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=500&auto=format&fit=crop';
-
+      
     const inStock =
       typeof body.inStock === 'boolean'
         ? body.inStock
         : body.stockStatus
         ? body.stockStatus === 'In Stock'
         : true;
-
+        
     const colors = Array.isArray(body.colors)
       ? body.colors.map((c: unknown) => String(c).trim()).filter(Boolean)
       : [];
-
+      
     const newProduct = await prisma.product.create({
       data: {
         name,
@@ -118,7 +117,7 @@ export async function POST(req: NextRequest) {
         inStock,
       },
     });
-
+    
     return NextResponse.json({ success: true, product: formatProduct(newProduct) });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to create product';
@@ -132,42 +131,39 @@ export async function PUT(req: NextRequest) {
     if (!admin) {
       return NextResponse.json({ success: false, error: 'Admin authentication required' }, { status: 401 });
     }
-
+    
     const body = await req.json();
     const { id, ...updateData } = body;
-
+    
     if (!id) {
       return NextResponse.json({ success: false, error: 'Product ID is required' }, { status: 400 });
     }
-
+    
     if (updateData.price !== undefined) updateData.price = Math.max(0, Number(updateData.price) || 0);
     if (updateData.name) updateData.name = String(updateData.name).trim();
     if (updateData.category) updateData.category = String(updateData.category).trim();
     if (updateData.description) updateData.description = String(updateData.description).trim();
-
     if (typeof updateData.inStock === 'undefined' && updateData.stockStatus) {
       updateData.inStock = updateData.stockStatus === 'In Stock';
     }
-
     if (updateData.image && (!updateData.images || updateData.images.length === 0)) {
       updateData.images = [updateData.image];
     }
-
     if (Array.isArray(updateData.colors)) {
       updateData.colors = updateData.colors.map((c: unknown) => String(c).trim()).filter(Boolean);
     }
-
+    
     delete updateData.slug;
     delete updateData.image;
     delete updateData.stockStatus;
     delete updateData.stockCount;
     delete updateData.totalSales;
-
+    
     const updatedProduct = await prisma.product.update({
       where: { id: String(id) },
       data: updateData,
     });
-
+    
     return NextResponse.json({ success: true, product: formatProduct(updatedProduct) });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to update product';
@@ -181,19 +177,18 @@ export async function DELETE(req: NextRequest) {
     if (!admin) {
       return NextResponse.json({ success: false, error: 'Admin authentication required' }, { status: 401 });
     }
-
+    
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-
+    
     if (!id) return NextResponse.json({ success: false, error: 'Product ID is required' }, { status: 400 });
-
+    
     const targetId = String(id);
-
     await prisma.$transaction(async (tx) => {
       await tx.orderItem.deleteMany({ where: { productId: targetId } });
       await tx.product.delete({ where: { id: targetId } });
     });
-
+    
     return NextResponse.json({ success: true, id: targetId });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to delete product';

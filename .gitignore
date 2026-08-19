@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# prisma generated client (only relevant if schema.prisma sets a custom output path)
+/prisma/generated/
+/src/generated/
+
 # production
 /build
 

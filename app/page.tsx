@@ -1,4 +1,4 @@
-'use client';
+'use client'; 
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Image from 'next/image';
@@ -17,7 +17,6 @@ function LandingPageContent() {
   const router = useRouter();
   const { updateQuantity, removeFromCart } = useCart();
   const { t } = useLanguage();
-
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -85,12 +84,10 @@ function LandingPageContent() {
     setDragStartX(clientX);
     setIsDragging(true);
   };
-
   const handleDragMove = (clientX: number) => {
     if (!isDragging || dragStartX === null) return;
     setDragOffset(clientX - dragStartX);
   };
-
   const handleDragEnd = () => {
     if (dragStartX !== null) {
       if (dragOffset < -60) {
@@ -147,7 +144,7 @@ function LandingPageContent() {
       {/* Top Marquee Bar */}
       <div className="bg-[#9ae600] text-black border-b border-black text-xs font-black uppercase tracking-widest py-2 px-4 flex items-center justify-between">
         <div className="flex-1 text-center font-mono text-[10px] sm:text-xs tracking-wider truncate">
-          FORECAST: TEES & SHORTS — STAPLES FOR THE SUN — {t('freeShippingOn')}
+          FORECAST: TEES & SHORTS   STAPLES FOR THE SUN   {t('freeShippingOn')}
         </div>
         <button
           onClick={() => setIsPaused((p) => !p)}
@@ -172,7 +169,6 @@ function LandingPageContent() {
       )}
 
       <main className="flex-1 w-full overflow-hidden">
-
         {/* Story Circle Navigation */}
         <section className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 py-6 px-4 overflow-hidden">
           <div className="max-w-7xl mx-auto flex items-center justify-start sm:justify-center gap-6 sm:gap-10 overflow-x-auto py-3 px-2 scrollbar-none snap-x touch-pan-x">
@@ -245,7 +241,6 @@ function LandingPageContent() {
                       <p className="text-xs font-bold uppercase tracking-widest text-white">{slide.badge}</p>
                     </div>
                   </div>
-
                   <div className="relative flex items-end justify-between p-6 sm:p-12 min-h-[240px] sm:min-h-[400px] group overflow-hidden border-t md:border-t-0 md:border-l border-zinc-800">
                     <Image
                       src={slide.rightImg}
@@ -335,7 +330,6 @@ function LandingPageContent() {
               ))}
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div
               onClick={() => navigateToCatalog('Clothing')}
@@ -355,7 +349,6 @@ function LandingPageContent() {
                 </span>
               </div>
             </div>
-
             <div
               onClick={() => navigateToCatalog('Footwear')}
               className="relative aspect-[4/5] rounded-xl overflow-hidden group cursor-pointer border border-zinc-200 dark:border-zinc-800"
@@ -374,7 +367,6 @@ function LandingPageContent() {
                 </span>
               </div>
             </div>
-
             <div
               onClick={() => navigateToCatalog('Accessories')}
               className="relative aspect-[4/5] rounded-xl overflow-hidden group cursor-pointer border border-zinc-200 dark:border-zinc-800"
@@ -434,7 +426,6 @@ function LandingPageContent() {
               ))}
             </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {bestsellers.map((product) => (
               <ProductCard
@@ -445,7 +436,6 @@ function LandingPageContent() {
               />
             ))}
           </div>
-
           <div className="text-center">
             <button
               onClick={() => navigateToCatalog()}
@@ -476,7 +466,6 @@ function LandingPageContent() {
                 </span>
               </div>
             </div>
-
             <div
               onClick={() => navigateToCatalog('Footwear')}
               className="relative aspect-[4/3] rounded-2xl overflow-hidden group cursor-pointer border border-zinc-200 dark:border-zinc-800"
@@ -521,6 +510,7 @@ function LandingPageContent() {
             </div>
           </div>
         </section>
+
       </main>
 
       <CartDrawer
@@ -530,6 +520,7 @@ function LandingPageContent() {
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeFromCart}
       />
+
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
@@ -537,6 +528,7 @@ function LandingPageContent() {
         setQuery={setSearchQuery}
         products={products}
       />
+
       <Footer />
     </div>
   );

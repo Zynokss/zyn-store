@@ -10,7 +10,7 @@ import {
 import { useCart } from '@/lib/CartContext';
 import { useTranslation } from '@/components/providers/IntlProvider';
 import { StoreLayout } from '@/components/layout/StoreLayout';
-import { neon } from '@/lib/neon';
+import { authClient } from '@/lib/auth-client';
 
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan',
@@ -36,7 +36,7 @@ interface ConfirmationData {
 }
 
 export default function CheckoutPage() {
-  const useSession = neon.auth.useSession as () => {
+  const useSession = authClient.useSession as () => {
     data?: { user?: { id?: string; email?: string; name?: string } };
     isPending: boolean;
   };

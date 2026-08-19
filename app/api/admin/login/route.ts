@@ -66,10 +66,13 @@ export async function POST(req: Request) {
       sessionToken,
     });
 
+    // 'none' is required for the cookie to be sent on cross-site requests from the
+    // external admin dashboard; browsers require 'secure' whenever sameSite is 'none'.
+    const isProd = process.env.NODE_ENV === 'production';
     response.cookies.set(ADMIN_SESSION_KEY, sessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       path: '/',
       maxAge: 60 * 60 * 8,
     });

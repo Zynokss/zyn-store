@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 async function getSessionUser() {
-  const { data: session } = (await auth.getSession()) as {
-    data?: { user?: { id?: string; email?: string; name?: string } } | null;
-  };
+  const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.email) return null;
   return { email: session.user.email.toLowerCase().trim() };
 }

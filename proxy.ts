@@ -1,14 +1,23 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const ALLOWED_ORIGINS = [
+const DEV_ORIGIN_PATTERNS = [
   /^https?:\/\/localhost(:\d+)?$/,
   /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
   /\.vercel\.app$/,
 ];
 
+// The external admin dashboard's origin varies per deployment, so it's configured
+// via env (ADMIN_DASHBOARD_ORIGIN, comma-separated) instead of hardcoded here.
+const EXTRA_ALLOWED_ORIGINS = (process.env.ADMIN_DASHBOARD_ORIGIN || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 function isOriginAllowed(origin: string): boolean {
-  return ALLOWED_ORIGINS.some((pattern) => pattern.test(origin));
+  if (!origin) return false;
+  if (EXTRA_ALLOWED_ORIGINS.includes(origin)) return true;
+  return DEV_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
 }
 
 export function proxy(request: NextRequest) {

@@ -11,11 +11,11 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'ZYN.STORE | Premium Apparel',
-  description: 'Engineered garments & heavyweight essentials — small-batch independent streetwear studio.',
+  description: 'Engineered garments & heavyweight essentials   small-batch independent streetwear studio.',
   keywords: ['streetwear', 'apparel', 'fashion', 'essentials', 'made in Morocco'],
   openGraph: {
     title: 'ZYN.STORE | Premium Apparel',
-    description: 'Considered clothing for everyday — engineered garments & heavyweight essentials.',
+    description: 'Considered clothing for everyday   engineered garments & heavyweight essentials.',
     type: 'website',
     locale: 'en_US',
   },

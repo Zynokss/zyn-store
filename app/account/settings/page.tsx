@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { StoreLayout } from '@/components/layout/StoreLayout';
 import { useTranslation } from '@/components/providers/IntlProvider';
-import { neon } from '@/lib/neon';
+import { authClient } from '@/lib/auth-client';
 
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan',
@@ -30,7 +30,7 @@ export default function SettingsPage() {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const useSession = neon.auth.useSession as () => {
+  const useSession = authClient.useSession as () => {
     data?: { user?: { id?: string; email?: string; name?: string } };
     isPending: boolean;
   };
@@ -54,7 +54,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!sessionLoading && !session?.user?.email) {
-      router.push('/auth/sign-in');
+      router.push('/login');
     }
   }, [sessionLoading, session, router]);
 
@@ -342,8 +342,10 @@ export default function SettingsPage() {
               type="button"
               onClick={async () => {
                 try {
-                  await neon?.auth?.signOut?.({});
-                } catch {}
+                  await authClient.signOut();
+                } catch (err) {
+                  console.error('Failed to sign out', err);
+                }
                 if (typeof window !== 'undefined') {
                   window.location.href = '/';
                 }

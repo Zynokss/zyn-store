@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { SignedIn, SignedOut } from '@neondatabase/neon-js/auth/react/ui';
 import { ShoppingBag, Search, Heart, User, Globe, Sun, Moon, ChevronDown, Check, Package, Settings, LogOut } from 'lucide-react';
 import { useTranslation } from '@/components/providers/IntlProvider';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { useCart } from '@/lib/CartContext';
-import { neon } from '@/lib/neon';
+import { authClient } from '@/lib/auth-client';
 
 interface NavbarProps {
   onOpenCart?: () => void;
@@ -41,7 +40,7 @@ export function Navbar({
   const langRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const useSession = neon.auth.useSession as () => {
+  const useSession = authClient.useSession as () => {
     data?: NeonSessionData;
     isPending?: boolean;
   };
@@ -234,7 +233,7 @@ export function Navbar({
             </button>
 
             {/* Account Menu */}
-            <SignedIn>
+            {sessionData?.user && (
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen((v) => !v)}
@@ -278,7 +277,7 @@ export function Navbar({
                         onClick={async () => {
                           setUserMenuOpen(false);
                           try {
-                            await neon.auth.signOut?.({});
+                            await authClient.signOut();
                           } catch {}
                           if (typeof window !== 'undefined') {
                             window.location.href = '/';
@@ -294,17 +293,17 @@ export function Navbar({
                   </div>
                 )}
               </div>
-            </SignedIn>
+            )}
 
-            <SignedOut>
+            {!sessionData?.user && (
               <Link
-                href="/auth/sign-in"
+                href="/login"
                 className="p-2 text-zinc-800 dark:text-zinc-200 hover:text-black dark:hover:text-white cursor-pointer"
                 aria-label={t('signIn') || 'Sign in'}
               >
                 <User className="h-5 w-5" />
               </Link>
-            </SignedOut>
+            )}
           </div>
         </div>
       </div>

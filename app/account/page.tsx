@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { StoreLayout } from '@/components/layout/StoreLayout';
 import { useTranslation } from '@/components/providers/IntlProvider';
-import { neon } from '@/lib/neon';
+import { authClient } from '@/lib/auth-client';
 
 interface OrderItem {
   id: string;
@@ -65,7 +65,7 @@ const MOROCCAN_CITIES = [
 export default function AccountPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const useSession = neon.auth.useSession as () => {
+  const useSession = authClient.useSession as () => {
     data?: { user?: { id?: string; email?: string; name?: string; image?: string } };
     isPending: boolean;
     error?: unknown;
@@ -94,7 +94,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/sign-in');
+      router.push('/login');
     }
   }, [status, router]);
 
@@ -251,7 +251,7 @@ export default function AccountPage() {
           <button
             onClick={async () => {
               try {
-                await neon?.auth?.signOut?.({});
+                await authClient.signOut();
               } catch {}
               if (typeof window !== 'undefined') {
                 window.location.href = '/';

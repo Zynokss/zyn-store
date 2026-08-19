@@ -25,9 +25,8 @@ export async function verifyAdminSession(req: NextRequest): Promise<{ id: string
 export async function verifyUserSession(): Promise<{ id: string; email: string; role: string } | null> {
   try {
     const { auth } = await import('@/lib/auth');
-    const { data: session } = (await auth.getSession()) as {
-      data?: { user?: { id?: string; email?: string; name?: string } } | null;
-    };
+    const { headers } = await import('next/headers');
+    const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.email) return null;
 
     const user = await prisma.user.findUnique({
