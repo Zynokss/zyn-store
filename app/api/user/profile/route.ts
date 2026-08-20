@@ -32,8 +32,8 @@ export async function GET() {
 
     return NextResponse.json({ success: true, user: profile });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user';
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+    console.error('Failed to fetch user profile:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch user' }, { status: 500 });
   }
 }
 
@@ -57,11 +57,21 @@ export async function PUT(request: Request) {
         city,
         postalCode: postalCode || null,
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        address1: true,
+        address2: true,
+        city: true,
+        postalCode: true,
+      },
     });
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update user';
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+    console.error('Failed to update user profile:', error);
+    return NextResponse.json({ success: false, error: 'Failed to update user' }, { status: 500 });
   }
 }

@@ -16,6 +16,7 @@ interface RawProduct {
   images?: string[];
   image?: string;
   inStock?: boolean;
+  featured?: boolean;
 }
 
 function formatProduct(p: RawProduct) {
@@ -36,6 +37,7 @@ function formatProduct(p: RawProduct) {
     images: Array.isArray(p.images) && p.images.length > 0 ? p.images : [primaryImage],
     image: primaryImage,
     inStock: p.inStock ?? true,
+    featured: Boolean(p.featured),
     slug: String(p.id),
   };
 }
@@ -68,8 +70,8 @@ export async function GET(req: NextRequest) {
       products: (products || []).map(formatProduct),
     });
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Unexpected API error';
-    return NextResponse.json({ success: false, error: errorMessage, products: [] }, { status: 500 });
+    console.error('Failed to fetch products:', err);
+    return NextResponse.json({ success: false, error: 'Failed to fetch products', products: [] }, { status: 500 });
   }
 }
 
@@ -120,8 +122,8 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ success: true, product: formatProduct(newProduct) });
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to create product';
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+    console.error('Failed to create product:', err);
+    return NextResponse.json({ success: false, error: 'Failed to create product' }, { status: 500 });
   }
 }
 
@@ -166,8 +168,8 @@ export async function PUT(req: NextRequest) {
     
     return NextResponse.json({ success: true, product: formatProduct(updatedProduct) });
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to update product';
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+    console.error('Failed to update product:', err);
+    return NextResponse.json({ success: false, error: 'Failed to update product' }, { status: 500 });
   }
 }
 
@@ -191,7 +193,7 @@ export async function DELETE(req: NextRequest) {
     
     return NextResponse.json({ success: true, id: targetId });
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to delete product';
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+    console.error('Failed to delete product:', err);
+    return NextResponse.json({ success: false, error: 'Failed to delete product' }, { status: 500 });
   }
 }

@@ -71,9 +71,9 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch stats';
+    console.error('Failed to fetch admin stats:', error);
     return NextResponse.json(
-      { success: false, error: errorMessage },
+      { success: false, error: 'Failed to fetch stats' },
       { status: 500 }
     );
   }

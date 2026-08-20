@@ -1,11 +1,22 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { ADMIN_SESSION_KEY, createAdminSessionToken, ADMIN_SESSION_MAX_AGE_SECONDS } from '@/lib/adminAuth';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
-const ADMIN_SESSION_KEY = 'zyn_admin_session';
+const LOGIN_MAX_ATTEMPTS = 8;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export async function POST(req: Request) {
   try {
+    const clientIp = getClientIp(req);
+    if (!checkRateLimit(`admin-login:${clientIp}`, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS)) {
+      return NextResponse.json(
+        { success: false, error: 'Too many login attempts. Try again later.' },
+        { status: 429 }
+      );
+    }
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
@@ -30,19 +41,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const isBcryptHash = /^\$2[aby]\$/.test(admin.password);
-
-    let passwordValid = false;
-    if (isBcryptHash) {
-      passwordValid = await bcrypt.compare(password, admin.password);
-    } else if (admin.password === password) {
-      passwordValid = true;
-      const hashed = await bcrypt.hash(password, 10);
-      await prisma.adminUser.update({
-        where: { id: admin.id },
-        data: { password: hashed },
-      });
-    }
+    const passwordValid = await bcrypt.compare(password, admin.password);
 
     if (!passwordValid) {
       return NextResponse.json(
@@ -51,9 +50,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const sessionToken = Buffer.from(
-      `${admin.id}:${Date.now()}:${crypto.randomUUID()}`
-    ).toString('base64');
+    const sessionToken = createAdminSessionToken(admin.id);
 
     const response = NextResponse.json({
       success: true,
@@ -63,7 +60,6 @@ export async function POST(req: Request) {
         email: admin.email,
         role: admin.role || 'ADMIN',
       },
-      sessionToken,
     });
 
     // 'none' is required for the cookie to be sent on cross-site requests from the
@@ -74,7 +70,7 @@ export async function POST(req: Request) {
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
       path: '/',
-      maxAge: 60 * 60 * 8,
+      maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
     });
 
     return response;
