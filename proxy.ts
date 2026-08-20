@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server';
 const DEV_ORIGIN_PATTERNS = [
   /^https?:\/\/localhost(:\d+)?$/,
   /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
-  /\.vercel\.app$/,
 ];
 
 // The external admin dashboard's origin varies per deployment, so it's configured

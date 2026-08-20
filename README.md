@@ -21,7 +21,7 @@ A sleek, modern, high-performance apparel e-commerce platform engineered with th
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **Icons:** [Lucide React](https://lucide.dev/)
 - **Database & Auth:** [Supabase JS Client](https://supabase.com/) (`@supabase/supabase-js`) & [NextAuth.js](https://next-auth.js.org/)
-- **Deployment:** [Vercel](https://vercel.com/)
+- **Deployment:** Docker (self-hosted via Coolify)
 
 ---
 
