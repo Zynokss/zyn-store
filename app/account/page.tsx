@@ -42,17 +42,19 @@ interface Order {
   id: string;
   total: number;
   status: string;
+  paymentMethod?: string;
   createdAt: string;
   address: string;
   city: string;
   items: OrderItem[];
 }
 
-const CIH_ACCOUNT_DETAILS = {
-  bankName: 'CIH BANK',
-  accountHolder: 'ACHRAF MLILOU',
-  rib: '230726251607921102440031',
-};
+interface BankTransferDetails {
+  bankName: string;
+  accountHolder: string;
+  rib: string;
+  whatsappProof: string;
+}
 
 const MOROCCAN_CITIES = [
   'Casablanca', 'Rabat', 'Tanger', 'Marrakech', 'Fès', 'Agadir', 'Tétouan',
@@ -79,6 +81,7 @@ export default function AccountPage() {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [copiedRib, setCopiedRib] = useState(false);
+  const [bankTransfer, setBankTransfer] = useState<BankTransferDetails | null>(null);
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
@@ -97,6 +100,13 @@ export default function AccountPage() {
       router.push('/login');
     }
   }, [status, router]);
+
+  useEffect(() => {
+    fetch('/api/payment-info')
+      .then((res) => res.json())
+      .then((data) => setBankTransfer(data.bankTransfer || null))
+      .catch(() => setBankTransfer(null));
+  }, []);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -135,7 +145,8 @@ export default function AccountPage() {
 
   const handleCopyRIB = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(CIH_ACCOUNT_DETAILS.rib.replace(/\s+/g, ''));
+    if (!bankTransfer?.rib) return;
+    navigator.clipboard.writeText(bankTransfer.rib.replace(/\s+/g, ''));
     setCopiedRib(true);
     setTimeout(() => setCopiedRib(false), 2000);
   };
@@ -335,17 +346,17 @@ export default function AccountPage() {
 
                       {isExpanded && (
                         <div className="p-5 border-t border-zinc-100 dark:border-zinc-800/80 bg-zinc-50 dark:bg-zinc-950/50 space-y-5">
-                          {order.status === 'PENDING_PAYMENT' && (
+                          {order.status === 'PENDING_PAYMENT' && order.paymentMethod === 'BANK_TRANSFER' && bankTransfer && (
                             <div className="bg-zinc-900 text-white rounded-2xl p-4 space-y-3 border border-zinc-800">
                               <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                                <span className="text-[10px] font-bold text-[#9ae600] uppercase tracking-wider">CIH BANK</span>
+                                <span className="text-[10px] font-bold text-[#9ae600] uppercase tracking-wider">{bankTransfer.bankName}</span>
                                 <Building2 className="h-4 w-4 text-zinc-400" />
                               </div>
                               <p className="text-xs text-zinc-300 font-normal leading-relaxed">
                                 {t('transferOf')} <span className="font-bold text-white">{order.total.toFixed(2)} MAD</span>:
                               </p>
                               <div className="flex items-center justify-between bg-zinc-950 p-2.5 rounded-xl border border-zinc-800 text-xs font-bold">
-                                <span className="text-[#9ae600] tracking-wider">{CIH_ACCOUNT_DETAILS.rib}</span>
+                                <span className="text-[#9ae600] tracking-wider">{bankTransfer.rib}</span>
                                 <button
                                   onClick={handleCopyRIB}
                                   className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
@@ -353,6 +364,12 @@ export default function AccountPage() {
                                   {copiedRib ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
                                 </button>
                               </div>
+                            </div>
+                          )}
+                          {order.status === 'PENDING_PAYMENT' && order.paymentMethod !== 'BANK_TRANSFER' && (
+                            <div className="bg-zinc-900 text-white rounded-2xl p-4 space-y-1.5 border border-zinc-800">
+                              <span className="text-[10px] font-bold text-[#9ae600] uppercase tracking-wider">{t('codTitle')}</span>
+                              <p className="text-xs text-zinc-300 font-normal leading-relaxed">{t('codConfirmNotice')}</p>
                             </div>
                           )}
 

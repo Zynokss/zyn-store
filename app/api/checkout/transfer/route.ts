@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyUserSession } from '@/lib/adminAuth';
+import { getBankTransferDetails } from '@/lib/payment';
 
 const SHIPPING_COST = 35;
 const FREE_SHIPPING_THRESHOLD = 500;
@@ -17,15 +18,29 @@ interface CartItem {
   };
 }
 
+type PaymentMethod = 'COD' | 'BANK_TRANSFER';
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { formData, cart, saveAddressToProfile } = body;
+    const paymentMethod: PaymentMethod = body.paymentMethod === 'BANK_TRANSFER' ? 'BANK_TRANSFER' : 'COD';
 
     if (!formData?.email || !cart || cart.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Missing required checkout details.' },
         { status: 400 }
+      );
+    }
+
+    // Bank transfer needs a real, operator-configured account to send funds to — never
+    // fall back to a hardcoded account number baked into source. Fail loudly instead.
+    const bankTransfer = paymentMethod === 'BANK_TRANSFER' ? getBankTransferDetails() : null;
+    if (paymentMethod === 'BANK_TRANSFER' && !bankTransfer) {
+      console.error('Bank transfer checkout attempted but CIH_BANK_NAME/CIH_ACCOUNT_HOLDER/CIH_RIB are not configured.');
+      return NextResponse.json(
+        { success: false, error: 'Bank transfer is not available right now. Please choose Cash on Delivery.' },
+        { status: 503 }
       );
     }
 
@@ -141,32 +156,27 @@ export async function POST(req: NextRequest) {
         zipCode: String(formData.postalCode || '').trim(),
         total: verifiedGrandTotal,
         status: 'PENDING_PAYMENT',
+        paymentMethod,
         items: { create: lineItems },
       },
       include: { items: true },
     });
 
-    const bankDetails = {
-      bankName: process.env.CIH_BANK_NAME || 'CIH BANK',
-      accountHolder: process.env.CIH_ACCOUNT_HOLDER || 'ACHRAF MLILOU',
-      rib: process.env.CIH_RIB || '230726251607921102440031',
-      whatsappProof: process.env.CIH_WHATSAPP || '+212600000000',
-      transferReason: order.id,
-    };
+    const bankDetails = bankTransfer ? { ...bankTransfer, transferReason: order.id } : null;
 
     return NextResponse.json({
       success: true,
       order,
+      paymentMethod,
       verifiedGrandTotal,
       subtotal: Number(subtotal.toFixed(2)),
       shipping,
       bankDetails,
     });
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Unexpected server error.';
     console.error('Transfer Order Server Exception:', err);
     return NextResponse.json(
-      { success: false, error: errorMessage },
+      { success: false, error: 'Unable to process checkout. Please try again.' },
       { status: 500 }
     );
   }

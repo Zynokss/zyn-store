@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
     const sanitizedOrders = orders.map((o) => ({
       id: o.id,
       status: o.status,
+      paymentMethod: o.paymentMethod,
       total: o.total,
       createdAt: o.createdAt,
       city: o.city,

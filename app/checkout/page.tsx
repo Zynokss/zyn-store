@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowLeft, Building2, CheckCircle2,
-  Copy, Check, Loader2, Truck, AlertTriangle, Eye, EyeOff
+  Copy, Check, Loader2, Truck, AlertTriangle, Eye, EyeOff, Banknote
 } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useTranslation } from '@/components/providers/IntlProvider';
@@ -20,6 +20,8 @@ const MOROCCAN_CITIES = [
   'Sidi Slimane', 'Errachidia', 'Taroudant', 'Essaouira', 'Dakhla', 'Laâyoune', 'Autre'
 ];
 
+type PaymentMethod = 'COD' | 'BANK_TRANSFER';
+
 interface BankDetails {
   bankName: string;
   accountHolder: string;
@@ -32,7 +34,8 @@ interface ConfirmationData {
   verifiedGrandTotal: number;
   verifiedSubtotal: number;
   verifiedShipping: number;
-  bankDetails: BankDetails;
+  paymentMethod: PaymentMethod;
+  bankDetails: BankDetails | null;
 }
 
 export default function CheckoutPage() {
@@ -52,6 +55,7 @@ export default function CheckoutPage() {
   const [activeStep, setActiveStep] = useState<number>(1);
   const [maxCompletedStep, setMaxCompletedStep] = useState<number>(1);
   const [showPassword, setShowPassword] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
   
   const [formData, setFormData] = useState({
     firstName: session?.user?.name?.split(' ')[0] || '',
@@ -150,6 +154,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           cart: formattedCart,
           formData,
+          paymentMethod,
           shippingMethod: 'AMANA_COLIS_POSTAUX',
           saveAddressToProfile: true,
         }),
@@ -158,18 +163,21 @@ export default function CheckoutPage() {
 
       if (data.success && data.order?.id) {
         clearCart();
-        const bd = data.bankDetails || {};
+        const bd = data.bankDetails;
         setConfirmation({
           orderId: data.order.id,
           verifiedGrandTotal: Number(data.verifiedGrandTotal ?? data.order.total ?? clientEstimateTotal),
           verifiedSubtotal: Number(data.verifiedSubtotal ?? subtotal),
           verifiedShipping: Number(data.verifiedShipping ?? displayShipping),
-          bankDetails: {
-            bankName: bd.bankName || 'CIH BANK',
-            accountHolder: bd.accountHolder || '',
-            rib: bd.rib || '',
-            whatsapp: bd.whatsapp || '',
-          },
+          paymentMethod: data.paymentMethod === 'BANK_TRANSFER' ? 'BANK_TRANSFER' : 'COD',
+          bankDetails: bd
+            ? {
+                bankName: bd.bankName || 'CIH BANK',
+                accountHolder: bd.accountHolder || '',
+                rib: bd.rib || '',
+                whatsapp: bd.whatsappProof || '',
+              }
+            : null,
         });
       } else {
         setError(data.error || t('errorSubmit'));
@@ -196,7 +204,8 @@ export default function CheckoutPage() {
 
   if (confirmation) {
     const { orderId, verifiedGrandTotal, bankDetails } = confirmation;
-    const waLink = bankDetails.whatsapp
+    const isCOD = confirmation.paymentMethod === 'COD' || !bankDetails;
+    const waLink = bankDetails?.whatsapp
       ? `https://wa.me/${bankDetails.whatsapp.replace(/\D/g, '')}`
       : '#';
     return (
@@ -213,55 +222,73 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <p className="text-xs leading-relaxed font-normal">
-              {t('transferToAccount')} — <strong>Amana</strong>. {t('whatsappProof')}{' '}
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noreferrer"
-                className="font-bold underline text-emerald-900 dark:text-[#9ae600]"
-              >
-                {bankDetails.whatsapp || '+212 6XX XXX XXX'}
-              </a>
-              .
-            </p>
-
-            <div className="bg-zinc-900 text-white rounded-2xl p-6 space-y-4 shadow-lg border border-zinc-800">
-              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-                <span className="text-xs font-bold text-[#9ae600] uppercase tracking-wider">{t('bankDetails')} {bankDetails.bankName || ''}</span>
-                <Building2 className="h-5 w-5 text-zinc-400" />
-              </div>
-              <div className="space-y-3 text-xs">
+            {isCOD ? (
+              <div className="bg-zinc-900 text-white rounded-2xl p-6 space-y-4 shadow-lg border border-zinc-800">
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                  <span className="text-xs font-bold text-[#9ae600] uppercase tracking-wider">{t('codTitle')}</span>
+                  <Banknote className="h-5 w-5 text-zinc-400" />
+                </div>
+                <p className="text-xs leading-relaxed font-normal text-zinc-300">
+                  {t('codConfirmNotice')}
+                </p>
                 <div>
                   <span className="text-zinc-400 text-[10px] uppercase block font-semibold">{t('totalToPay')}</span>
                   <span className="text-lg font-extrabold text-white">{verifiedGrandTotal.toFixed(2)} MAD</span>
                 </div>
-                {bankDetails.accountHolder && (
-                  <div>
-                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">{t('accountHolder')}</span>
-                    <span className="font-bold text-white uppercase">{bankDetails.accountHolder}</span>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs leading-relaxed font-normal">
+                  {t('transferToAccount')} — <strong>Amana</strong>. {t('whatsappProof')}{' '}
+                  <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold underline text-emerald-900 dark:text-[#9ae600]"
+                  >
+                    {bankDetails?.whatsapp || '+212 6XX XXX XXX'}
+                  </a>
+                  .
+                </p>
+
+                <div className="bg-zinc-900 text-white rounded-2xl p-6 space-y-4 shadow-lg border border-zinc-800">
+                  <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <span className="text-xs font-bold text-[#9ae600] uppercase tracking-wider">{t('bankDetails')} {bankDetails?.bankName || ''}</span>
+                    <Building2 className="h-5 w-5 text-zinc-400" />
                   </div>
-                )}
-                {bankDetails.rib && (
-                  <div>
-                    <span className="text-zinc-400 text-[10px] uppercase block font-semibold">{t('rib')}</span>
-                    <div className="flex items-center justify-between bg-zinc-950 p-3 rounded-xl border border-zinc-800 mt-1">
-                      <span className="font-bold text-[#9ae600] tracking-wider">{bankDetails.rib}</span>
-                      <button
-                        onClick={() => handleCopyRIB(bankDetails.rib)}
-                        className="p-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                      >
-                        {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
-                      </button>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <span className="text-zinc-400 text-[10px] uppercase block font-semibold">{t('totalToPay')}</span>
+                      <span className="text-lg font-extrabold text-white">{verifiedGrandTotal.toFixed(2)} MAD</span>
+                    </div>
+                    {bankDetails?.accountHolder && (
+                      <div>
+                        <span className="text-zinc-400 text-[10px] uppercase block font-semibold">{t('accountHolder')}</span>
+                        <span className="font-bold text-white uppercase">{bankDetails.accountHolder}</span>
+                      </div>
+                    )}
+                    {bankDetails?.rib && (
+                      <div>
+                        <span className="text-zinc-400 text-[10px] uppercase block font-semibold">{t('rib')}</span>
+                        <div className="flex items-center justify-between bg-zinc-950 p-3 rounded-xl border border-zinc-800 mt-1">
+                          <span className="font-bold text-[#9ae600] tracking-wider">{bankDetails.rib}</span>
+                          <button
+                            onClick={() => handleCopyRIB(bankDetails.rib)}
+                            className="p-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          >
+                            {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="pt-2 border-t border-zinc-800">
+                      <span className="text-amber-400 text-[10px] font-bold uppercase block">{t('reference')} · {t('mandatory')}</span>
+                      <span className="text-sm font-extrabold text-white tracking-wider">{orderId}</span>
                     </div>
                   </div>
-                )}
-                <div className="pt-2 border-t border-zinc-800">
-                  <span className="text-amber-400 text-[10px] font-bold uppercase block">{t('reference')} · {t('mandatory')}</span>
-                  <span className="text-sm font-extrabold text-white tracking-wider">{orderId}</span>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
 
           <Link
@@ -567,24 +594,62 @@ export default function CheckoutPage() {
 
               {activeStep === 4 && (
                 <div className="p-5 space-y-5 bg-white dark:bg-zinc-900/40">
-                  <div className="bg-zinc-900 text-white rounded-2xl p-5 space-y-3 border border-zinc-800">
-                    <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                      <span className="text-[10px] font-bold text-[#9ae600] uppercase tracking-wider">{t('bankDetails')}</span>
-                      <Building2 className="h-4 w-4 text-zinc-400" />
-                    </div>
-                    <p className="text-xs text-zinc-300 leading-relaxed font-normal">
-                      {t('transferToAccount')}.
-                    </p>
-                    <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-xs space-y-1">
-                      <div className="flex items-center gap-1.5 text-amber-400 font-bold text-[10px] uppercase">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        <span>{t('reference')} · {t('mandatory')}</span>
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('COD')}
+                      className={`w-full flex items-center gap-3 p-4 rounded-2xl border text-left transition-colors cursor-pointer ${
+                        paymentMethod === 'COD'
+                          ? 'border-zinc-900 dark:border-[#9ae600] bg-zinc-50 dark:bg-zinc-950'
+                          : 'border-zinc-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <Banknote className="h-5 w-5 text-zinc-900 dark:text-[#9ae600] shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="text-xs font-bold uppercase text-zinc-900 dark:text-white">{t('codTitle')}</h4>
+                        <p className="text-[10px] text-zinc-500 font-medium">{t('codDescription')}</p>
                       </div>
-                      <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                        {t('reference')}: <strong>{t('orderNumber')}</strong>
-                      </p>
-                    </div>
+                      {paymentMethod === 'COD' && <Check className="h-5 w-5 text-emerald-600 dark:text-[#9ae600] shrink-0" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('BANK_TRANSFER')}
+                      className={`w-full flex items-center gap-3 p-4 rounded-2xl border text-left transition-colors cursor-pointer ${
+                        paymentMethod === 'BANK_TRANSFER'
+                          ? 'border-zinc-900 dark:border-[#9ae600] bg-zinc-50 dark:bg-zinc-950'
+                          : 'border-zinc-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <Building2 className="h-5 w-5 text-zinc-900 dark:text-[#9ae600] shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="text-xs font-bold uppercase text-zinc-900 dark:text-white">{t('bankDetails')}</h4>
+                        <p className="text-[10px] text-zinc-500 font-medium">{t('bankTransferDescription')}</p>
+                      </div>
+                      {paymentMethod === 'BANK_TRANSFER' && <Check className="h-5 w-5 text-emerald-600 dark:text-[#9ae600] shrink-0" />}
+                    </button>
                   </div>
+
+                  {paymentMethod === 'BANK_TRANSFER' && (
+                    <div className="bg-zinc-900 text-white rounded-2xl p-5 space-y-3 border border-zinc-800">
+                      <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                        <span className="text-[10px] font-bold text-[#9ae600] uppercase tracking-wider">{t('bankDetails')}</span>
+                        <Building2 className="h-4 w-4 text-zinc-400" />
+                      </div>
+                      <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                        {t('transferToAccount')}.
+                      </p>
+                      <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 text-amber-400 font-bold text-[10px] uppercase">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          <span>{t('reference')} · {t('mandatory')}</span>
+                        </div>
+                        <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                          {t('reference')}: <strong>{t('orderNumber')}</strong>
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     type="submit"

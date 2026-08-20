@@ -100,6 +100,7 @@ model Order {
   zipCode   String
   total     Float
   status    String      @default("PENDING_PAYMENT")
+  paymentMethod String  @default("COD")
   createdAt DateTime    @default(now())
   user      User?       @relation(fields: [userId], references: [id])
   items     OrderItem[]
