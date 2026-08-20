@@ -30,18 +30,18 @@ export async function POST(req: Request) {
       );
     }
 
+    const isBcryptHash = /^\$2[aby]\$/.test(admin.password);
+
     let passwordValid = false;
-    try {
+    if (isBcryptHash) {
       passwordValid = await bcrypt.compare(password, admin.password);
-    } catch {
-      if (admin.password === password) {
-        passwordValid = true;
-        const hashed = await bcrypt.hash(password, 10);
-        await prisma.adminUser.update({
-          where: { id: admin.id },
-          data: { password: hashed },
-        });
-      }
+    } else if (admin.password === password) {
+      passwordValid = true;
+      const hashed = await bcrypt.hash(password, 10);
+      await prisma.adminUser.update({
+        where: { id: admin.id },
+        data: { password: hashed },
+      });
     }
 
     if (!passwordValid) {
